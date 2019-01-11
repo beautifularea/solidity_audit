@@ -513,12 +513,19 @@ LinkerObject const& Assembly::assemble() const
     std::cout << "Assembly.assemble" << std::endl;
 
 	if (!m_assembledObject.bytecode.empty())
+    {
+        std::cout << "zhtian opcodes m_assembledObject NNNNNNNNNNNNot empty" << std::endl;
+
 		return m_assembledObject;
+    }
 
 	size_t subTagSize = 1;
 	for (auto const& sub: m_subs)
 	{
+        std::cout << "zhtian opcodes sub" << std::endl;
+        
 		sub->assemble();
+
 		for (size_t tagPos: sub->m_tagPositionsInBytecode)
 			if (tagPos != size_t(-1) && tagPos > subTagSize)
 				subTagSize = tagPos;
@@ -539,9 +546,15 @@ LinkerObject const& Assembly::assemble() const
 	unsigned bytesPerTag = dev::bytesRequired(bytesRequiredForCode);
 	uint8_t tagPush = (uint8_t)Instruction::PUSH1 - 1 + bytesPerTag;
 
+    std::cout << "auxiliaryData : " << toHex(m_auxiliaryData) << std::endl;
+
+
 	unsigned bytesRequiredIncludingData = bytesRequiredForCode + 1 + m_auxiliaryData.size();
 	for (auto const& sub: m_subs)
+    {
+        std::cout << "sub ..." << std::endl;
 		bytesRequiredIncludingData += sub->assemble().bytecode.size();
+    }
 
 	unsigned bytesPerDataRef = dev::bytesRequired(bytesRequiredIncludingData);
 	uint8_t dataRefPush = (uint8_t)Instruction::PUSH1 - 1 + bytesPerDataRef;
@@ -599,6 +612,7 @@ LinkerObject const& Assembly::assemble() const
 			break;
 		case PushSubSize:
 		{
+            std::cout << "push sub ..." << std::endl;
 			auto s = m_subs.at(size_t(i.data()))->assemble().bytecode.size();
 			i.setPushedValue(u256(s));
 			uint8_t b = max<unsigned>(1, dev::bytesRequired(s));
@@ -651,6 +665,8 @@ LinkerObject const& Assembly::assemble() const
 			bytesRef r(ret.bytecode.data() + ref->second, bytesPerDataRef);
 			toBigEndian(ret.bytecode.size(), r);
 		}
+
+        std::cout << "m_sub append ..." << std::endl;
 		ret.append(m_subs[i]->assemble());
 	}
 	for (auto const& i: tagRef)

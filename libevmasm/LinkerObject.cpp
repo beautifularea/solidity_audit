@@ -22,7 +22,7 @@
 #include <libevmasm/LinkerObject.h>
 #include <libdevcore/CommonData.h>
 #include <libdevcore/Keccak256.h>
-
+#include <libevmasm/Instruction.h>
 using namespace dev;
 using namespace dev::eth;
 using namespace std;
@@ -31,8 +31,16 @@ void LinkerObject::append(LinkerObject const& _other)
 {
     std::cout << std::setw(10) << "zhtian opcodes linkerObject->append" << std::endl;
 	for (auto const& ref: _other.linkReferences)
+    {
+        std::cout << "linkreference ---" << std::endl;
 		linkReferences[ref.first + bytecode.size()] = ref.second;
+    }
+
+
+            std::cout << "before += " << solidity::disassemble(bytecode) << std::endl;
+
 	bytecode += _other.bytecode;
+            std::cout << "end += " << solidity::disassemble(bytecode) << std::endl;
 }
 
 void LinkerObject::link(map<string, h160> const& _libraryAddresses)

@@ -244,7 +244,7 @@ public:
 		return m_asm->assemblyJSON(_sourceCodes);
 	}
 
-	eth::LinkerObject const& assembledObject() const { return m_asm->assemble(); }
+	eth::LinkerObject const& assembledObject() const { std::cout << "--------At context call assemble() ------\n"; return m_asm->assemble(); }
 	eth::LinkerObject const& assembledRuntimeObject(size_t _subIndex) const { return m_asm->sub(_subIndex).assemble(); }
 
 	/**

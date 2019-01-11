@@ -864,9 +864,10 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 	shared_ptr<Compiler> compiler = make_shared<Compiler>(m_evmVersion, m_optimize, m_optimizeRuns);
 	compiledContract.compiler = compiler;
 
-    std::cout << "create metadata" << std::endl;
 
 	string metadata = createMetadata(compiledContract);
+    std::cout << "create metadata : " << metadata << std::endl;
+
 	compiledContract.metadata = metadata;
 
 	bytes cborEncodedMetadata = createCBORMetadata(
@@ -892,7 +893,11 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 	{
         std::cout << "compiler . assembledObject" << std::endl;
 		// Assemble deployment (incl. runtime)  object.
+
+        std::cout << "-----------call assembledObject()-----------" << std::endl;
 		compiledContract.object = compiler->assembledObject();
+        std::cout << solidity::disassemble(compiledContract.object.bytecode) << std::endl;
+        std::cout << "-----------end call assembledObject()-----------" << std::endl;
 	}
 	catch(eth::AssemblyException const&)
 	{
@@ -908,8 +913,10 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 	{
 		solAssert(false, "Assembly exception for deployed bytecode");
 	}
-
+    
+    std::cout << "\n -------call assemble---------------\n";
 	_compiledContracts[compiledContract.contract] = &compiler->assembly();
+    std::cout << "\n ---------end call assemble---------\n";
 
     std::cout << "-------------------------EEEEEEEEEEEEEEEEENd----------------" << std::endl;
 }

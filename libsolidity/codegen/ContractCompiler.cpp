@@ -63,7 +63,7 @@ void ContractCompiler::compileContract(
 	std::map<const ContractDefinition*, eth::Assembly const*> const& _contracts
 )
 {
-    std::cout << "zhtian ContractCompiler compileContract" << std::endl;
+    std::cout << "\n zhtian ContractCompiler compileContract" << std::endl;
 
 	CompilerContext::LocationSetter locationSetter(m_context, _contract);
 
@@ -90,6 +90,8 @@ size_t ContractCompiler::compileConstructor(
 	std::map<const ContractDefinition*, eth::Assembly const*> const& _contracts
 )
 {
+    std::cout << "-----compileConstructor----" << std::endl;
+
 	CompilerContext::LocationSetter locationSetter(m_context, _contract);
 	if (_contract.isLibrary())
 		return deployLibrary(_contract);
@@ -104,6 +106,8 @@ void ContractCompiler::initializeContext(ContractDefinition const& _contract,
                                          map<ContractDefinition const*, eth::Assembly const*> const& _compiledContracts
 )
 {
+    std::cout << "initializeContext---------" << std::endl;
+
 	m_context.setExperimentalFeatures(_contract.sourceUnit().annotation().experimentalFeatures);
 	m_context.setCompiledContracts(_compiledContracts);
 	m_context.setInheritanceHierarchy(_contract.annotation().linearizedBaseContracts);
