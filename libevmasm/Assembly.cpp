@@ -103,10 +103,18 @@ unsigned Assembly::bytesRequired(unsigned subTagSize) const
 	{
 		unsigned ret = 1;
 		for (auto const& i: m_data)
-			ret += i.second.size();
+        {
+            int dataSize = i.second.size();
+            std::cout << "dataSize : " << dataSize << std::endl;
+
+			ret += dataSize;
+        }
 
 		for (AssemblyItem const& i: m_items)
+        {
 			ret += i.bytesRequired(tagSize);
+        }
+
 		if (dev::bytesRequired(ret) <= tagSize)
 			return ret;
 	}
@@ -535,9 +543,10 @@ LinkerObject const& Assembly::assemble() const
 
 	LinkerObject& ret = m_assembledObject;
     
-    std::cout << setw(10) << "zhtian opcodes m_ssembledObject" << std::endl;
-
+    std::cout << "subTagSize : " << subTagSize << std::endl;
 	size_t bytesRequiredForCode = bytesRequired(subTagSize);
+    std::cout << "bytesRequiredForCode : " << bytesRequiredForCode << std::endl;
+
 	m_tagPositionsInBytecode = vector<size_t>(m_usedTags, -1);
 	map<size_t, pair<size_t, size_t>> tagRef;
 	multimap<h256, unsigned> dataRef;
@@ -545,9 +554,6 @@ LinkerObject const& Assembly::assemble() const
 	vector<unsigned> sizeRef; ///< Pointers to code locations where the size of the program is inserted
 	unsigned bytesPerTag = dev::bytesRequired(bytesRequiredForCode);
 	uint8_t tagPush = (uint8_t)Instruction::PUSH1 - 1 + bytesPerTag;
-
-    std::cout << "auxiliaryData : " << toHex(m_auxiliaryData) << std::endl;
-
 
 	unsigned bytesRequiredIncludingData = bytesRequiredForCode + 1 + m_auxiliaryData.size();
 	for (auto const& sub: m_subs)
@@ -558,6 +564,9 @@ LinkerObject const& Assembly::assemble() const
 
 	unsigned bytesPerDataRef = dev::bytesRequired(bytesRequiredIncludingData);
 	uint8_t dataRefPush = (uint8_t)Instruction::PUSH1 - 1 + bytesPerDataRef;
+
+    std::cout << "bytesRequiredIncludingData : " << bytesRequiredIncludingData << std::endl;
+
 	ret.bytecode.reserve(bytesRequiredIncludingData);
 
 	for (AssemblyItem const& i: m_items)

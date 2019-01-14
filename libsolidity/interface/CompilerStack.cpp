@@ -129,8 +129,11 @@ bool CompilerStack::addSource(string const& _name, string const& _content, bool 
 
 	bool existed = m_sources.count(_name) != 0;
 	reset(true);
+
+    //make Scanner( && add content)
 	m_sources[_name].scanner = make_shared<Scanner>(CharStream(_content, _name));
 	m_sources[_name].isLibrary = _isLibrary;
+
 	m_stackState = SourcesSet;
 	return existed;
 }
@@ -140,6 +143,7 @@ bool CompilerStack::parse()
 	//reset
 	if (m_stackState != SourcesSet)
 		return false;
+
 	m_errorReporter.clear();
 	ASTNode::resetID();
 
@@ -155,16 +159,16 @@ bool CompilerStack::parse()
 		sourcesToParse.push_back(s.first);
     }
 
-    std::cout << "\n";
     std::cout << "sourcesToParse : " << sourcesToParse.size() << std::endl;
-
 	for (size_t i = 0; i < sourcesToParse.size(); ++i)
 	{
 		string const& path = sourcesToParse[i];
+        std::cout << "path : " << path << std::endl;
 
 		Source& source = m_sources[path];
 		source.scanner->reset();
 		source.ast = Parser(m_errorReporter).parse(source.scanner);
+
 		if (!source.ast)
 			solAssert(!Error::containsOnlyWarnings(m_errorReporter.errors()), "Parser returned null but did not report error.");
 		else
@@ -172,6 +176,8 @@ bool CompilerStack::parse()
 			source.ast->annotation().path = path;
 			for (auto const& newSource: loadMissingSources(*source.ast, path))
 			{
+                std::cout << "loadMissingSources" << std::endl;
+
 				string const& newPath = newSource.first;
 				string const& newContents = newSource.second;
 				m_sources[newPath].scanner = make_shared<Scanner>(CharStream(newContents, newPath));
@@ -201,22 +207,28 @@ bool CompilerStack::analyze()
 
 	try {
 
-		SyntaxChecker syntaxChecker(m_errorReporter);
+		std::cout << "syntax checker" << std::endl;
+        SyntaxChecker syntaxChecker(m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			if (!syntaxChecker.checkSyntax(*source->ast))
 				noErrors = false;
 
+        std::cout << "docstring analyser" << std::endl;
 		DocStringAnalyser docStringAnalyser(m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			if (!docStringAnalyser.analyseDocStrings(*source->ast))
 				noErrors = false;
 
+        std::cout << "nameAndTypeResolver" << std::endl;
 		m_globalContext = make_shared<GlobalContext>();
+        std::cout << "call NameAndTypeResolver" << std::endl;
 		NameAndTypeResolver resolver(m_globalContext->declarations(), m_scopes, m_errorReporter);
+        std::cout << "call registerDeclarations" << std::endl;
 		for (Source const* source: m_sourceOrder)
 			if (!resolver.registerDeclarations(*source->ast))
 				return false;
 
+        std::cout << "perforImports" << std::endl;
 		map<string, SourceUnit const*> sourceUnitsByName;
 		for (auto& source: m_sources)
 			sourceUnitsByName[source.first] = source.second.ast.get();
@@ -231,6 +243,7 @@ bool CompilerStack::analyze()
 				if (ContractDefinition* contract = dynamic_cast<ContractDefinition*>(node.get()))
 				{
 					m_globalContext->setCurrentContract(*contract);
+
 					if (!resolver.updateDeclaration(*m_globalContext->currentThis())) return false;
 					if (!resolver.updateDeclaration(*m_globalContext->currentSuper())) return false;
 					if (!resolver.resolveNamesAndTypes(*contract)) return false;
@@ -383,11 +396,8 @@ bool CompilerStack::compile()
 
 	m_stackState = CompilationSuccessful;
 
-    std::cout << "before link contract size : " << compiledContracts.size() << std::endl;
-
 	this->link();
 
-    std::cout << "after link contract size : " << compiledContracts.size() << std::endl;
     std::cout << "compile : end to compile contract]]]]]]]]]]]]]]]]]]]" << std::endl;
 	return true;
 }
@@ -399,6 +409,11 @@ void CompilerStack::link()
 	solAssert(m_stackState >= CompilationSuccessful, "");
 	for (auto& contract: m_contracts)
 	{
+        std::cout << "m_libraries size : " << m_libraries.size() << std::endl;
+        for(auto& lib : m_libraries)
+        {
+            std::cout << "lib string : " << lib.first << std::endl;
+        }
 		contract.second.object.link(m_libraries);
 		contract.second.runtimeObject.link(m_libraries);
 	}
@@ -859,11 +874,11 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 
     std::cout << "contract fully qualified name : " << _contract.fullyQualifiedName() << std::endl;
 
+    std::cout << "m_contracts size : " << m_contracts.size() << std::endl; //1 
 	Contract& compiledContract = m_contracts.at(_contract.fullyQualifiedName());
 
 	shared_ptr<Compiler> compiler = make_shared<Compiler>(m_evmVersion, m_optimize, m_optimizeRuns);
 	compiledContract.compiler = compiler;
-
 
 	string metadata = createMetadata(compiledContract);
     std::cout << "create metadata : " << metadata << std::endl;
@@ -881,14 +896,11 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 
 		// Run optimiser and compile the contract.
 		compiler->compileContract(_contract, _compiledContracts, cborEncodedMetadata);
-
-        std::cout << "after invoke compiler->compileContract size : " << _compiledContracts.size() << std::endl;
 	}
 	catch(eth::OptimizerException const&)
 	{
 		solAssert(false, "Optimizer exception during compilation");
 	}
-
 	try
 	{
         std::cout << "compiler . assembledObject" << std::endl;

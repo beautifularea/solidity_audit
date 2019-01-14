@@ -1018,6 +1018,7 @@ public:
 		_stateMutability
 	)
 	{
+        std::cout << "FunctionType : call parseElementaryTypeVector" << std::endl;
 	}
 
 	/// @returns the type of the "new Contract" function, i.e. basically the constructor.

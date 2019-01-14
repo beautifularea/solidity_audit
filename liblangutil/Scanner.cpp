@@ -182,6 +182,8 @@ void Scanner::reset(std::shared_ptr<CharStream> _source)
 
 void Scanner::reset()
 {
+    std::cout << "Scanner reset" << std::endl;
+
 	m_source->reset();
 	m_char = m_source->get();
 	skipWhitespace();

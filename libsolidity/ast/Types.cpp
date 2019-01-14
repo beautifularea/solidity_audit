@@ -285,6 +285,8 @@ string Type::identifier() const
 
 TypePointer Type::fromElementaryTypeName(ElementaryTypeNameToken const& _type)
 {
+    std::cout << "fromElementaryTypeName------------" << std::endl;
+
 	solAssert(TokenTraits::isElementaryTypeName(_type.token()),
 		"Expected an elementary type name but got " + _type.toString()
 	);
@@ -2832,6 +2834,8 @@ FunctionTypePointer FunctionType::interfaceFunctionType() const
 
 MemberList::MemberMap FunctionType::nativeMembers(ContractDefinition const*) const
 {
+    std::cout << "nativeMemebers m_kind  " << std::endl;
+
 	switch (m_kind)
 	{
 	case Kind::External:
@@ -2842,8 +2846,12 @@ MemberList::MemberMap FunctionType::nativeMembers(ContractDefinition const*) con
 	case Kind::BareStaticCall:
 	{
 		MemberList::MemberMap members;
+
 		if (m_kind == Kind::External)
+        {
+            std::cout << "Kind::External" << std::endl;
 			members.emplace_back("selector", make_shared<FixedBytesType>(4));
+        }
 		if (m_kind != Kind::BareDelegateCall)
 		{
 			if (isPayable())
@@ -3042,10 +3050,17 @@ bool FunctionType::isPure() const
 
 TypePointers FunctionType::parseElementaryTypeVector(strings const& _types)
 {
+    std::cout << "parseElementaryTypeVector" << std::endl;
+
 	TypePointers pointers;
 	pointers.reserve(_types.size());
 	for (string const& type: _types)
+    {   std::cout << "Type : " << type << "\n";
 		pointers.push_back(Type::fromElementaryTypeName(type));
+    }
+
+    std::cout << "\n";
+
 	return pointers;
 }
 

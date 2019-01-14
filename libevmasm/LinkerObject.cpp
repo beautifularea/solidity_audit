@@ -40,6 +40,7 @@ void LinkerObject::append(LinkerObject const& _other)
             std::cout << "before += " << solidity::disassemble(bytecode) << std::endl;
 
 	bytecode += _other.bytecode;
+
             std::cout << "end += " << solidity::disassemble(bytecode) << std::endl;
 }
 

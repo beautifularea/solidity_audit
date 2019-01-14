@@ -77,31 +77,38 @@ ASTPointer<SourceUnit> Parser::parse(shared_ptr<Scanner> const& _scanner)
 	try
 	{
 		m_recursionDepth = 0;
+
 		m_scanner = _scanner;
 
 		ASTNodeFactory nodeFactory(*this);
-
 		vector<ASTPointer<ASTNode>> nodes;
+
 		while (m_scanner->currentToken() != Token::EOS)
 		{
+            std::cout << "currentToken != EOS" << std::endl;
 			switch (m_scanner->currentToken())
 			{
 			case Token::Pragma:
+                std::cout << "pragma" << std::endl;
 				nodes.push_back(parsePragmaDirective());
 				break;
 			case Token::Import:
+                std::cout << "import" << std::endl;
 				nodes.push_back(parseImportDirective());
 				break;
 			case Token::Interface:
 			case Token::Contract:
 			case Token::Library:
+                std::cout << "interface or contract or library" << std::endl;
 				nodes.push_back(parseContractDefinition());
 				break;
 			default:
 				fatalParserError(string("Expected pragma, import directive or contract/interface/library definition."));
 			}
 		}
+
 		solAssert(m_recursionDepth == 0, "");
+
 		return nodeFactory.createNode<SourceUnit>(nodes);
 	}
 	catch (FatalError const&)
@@ -135,7 +142,9 @@ ASTPointer<PragmaDirective> Parser::parsePragmaDirective()
 	// Currently supported:
 	// pragma solidity ^0.4.0 || ^0.3.0;
 	ASTNodeFactory nodeFactory(*this);
+
 	expectToken(Token::Pragma);
+
 	vector<string> literals;
 	vector<Token> tokens;
 	do
@@ -152,7 +161,6 @@ ASTPointer<PragmaDirective> Parser::parsePragmaDirective()
 			tokens.push_back(token);
 
             std::cout << "literal : " << literal << "\t";
-            //std::cout << "token   : " << TokenTraits::toString(token) << "\n";
 		}
 		m_scanner->next();
 	}
@@ -242,43 +250,62 @@ ContractDefinition::ContractKind Parser::parseContractKind()
 	switch(m_scanner->currentToken())
 	{
 	case Token::Interface:
+    {
+        std::cout << "Contract kind : Interface" << std::endl;
+
 		kind = ContractDefinition::ContractKind::Interface;
 		break;
+    }
 	case Token::Contract:
+        std::cout << "contract kind : [contract]" << std::endl;
 		kind = ContractDefinition::ContractKind::Contract;
 		break;
 	case Token::Library:
+        std::cout << "contract kind : [library]" << std::endl;
 		kind = ContractDefinition::ContractKind::Library;
 		break;
 	default:
 		solAssert(false, "Invalid contract kind.");
 	}
+
 	m_scanner->next();
+
 	return kind;
 }
 
 ASTPointer<ContractDefinition> Parser::parseContractDefinition()
 {
-    std::cout << "\n Parse.parseContractDefinition" << std::endl;
+    std::cout << "\nParse.parseContractDefinition" << std::endl;
 
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
 	ASTPointer<ASTString> docString;
+
 	if (m_scanner->currentCommentLiteral() != "")
 		docString = make_shared<ASTString>(m_scanner->currentCommentLiteral());
+    else
+    {
+        std::cout << "no comments" << std::endl;
+    }
 
 	ContractDefinition::ContractKind contractKind = parseContractKind();
 	ASTPointer<ASTString> name = expectIdentifierToken();
-    std::cout << "name : " << name << std::endl;
+    std::cout << "identifier name : " << *name << std::endl;
 
 	vector<ASTPointer<InheritanceSpecifier>> baseContracts;
     if (m_scanner->currentToken() == Token::Is)
+    {
         do
         {
             m_scanner->next();
             baseContracts.push_back(parseInheritanceSpecifier());
         }
         while (m_scanner->currentToken() == Token::Comma);
+    }
+    else
+    {
+        std::cout << "current token not Is" << std::endl;
+    }
 
     vector<ASTPointer<ASTNode>> subNodes;
     expectToken(Token::LBrace);
@@ -286,8 +313,12 @@ ASTPointer<ContractDefinition> Parser::parseContractDefinition()
 	{
 		Token currentTokenValue = m_scanner->currentToken();
         std::cout << "token value : " << TokenTraits::toString(currentTokenValue) << "\n";
+
 		if (currentTokenValue == Token::RBrace)
+        {
+            std::cout << "token value = RBrace" << std::endl;
 			break;
+        }
 		else if (currentTokenValue == Token::Function || currentTokenValue == Token::Constructor)
 			// This can be a function or a state variable of function type (especially
 			// complicated to distinguish fallback function from function type state variable)
@@ -414,6 +445,7 @@ Parser::FunctionHeaderParserResult Parser::parseFunctionHeader(bool _forceEmptyN
 		result.isConstructor = true;
 	else if (m_scanner->currentToken() != Token::Function)
 		solAssert(false, "Function or constructor expected.");
+
 	m_scanner->next();
 
 	if (result.isConstructor)
@@ -426,7 +458,11 @@ Parser::FunctionHeaderParserResult Parser::parseFunctionHeader(bool _forceEmptyN
 			"If you intend this to be a constructor, use \"constructor(...) { ... }\" without the \"function\" keyword to define it."
 		));
 	else
+    {
 		result.name = expectIdentifierToken();
+
+        std::cout << "result name : " << *(result.name) << std::endl;
+    }
 
 	VarDeclParserOptions options;
 	options.allowLocationSpecifier = true;
@@ -508,6 +544,8 @@ ASTPointer<ASTNode> Parser::parseFunctionDefinitionOrFunctionTypeStateVariable()
 	ASTPointer<ASTString> docstring;
 	if (m_scanner->currentCommentLiteral() != "")
 		docstring = make_shared<ASTString>(m_scanner->currentCommentLiteral());
+    else
+        std::cout << "no comments" << std::endl;
 
 	FunctionHeaderParserResult header = parseFunctionHeader(false, true);
 
@@ -550,12 +588,16 @@ ASTPointer<ASTNode> Parser::parseFunctionDefinitionOrFunctionTypeStateVariable()
 			header.visibility,
 			header.stateMutability
 		);
+
 		type = parseTypeNameSuffix(type, nodeFactory);
+
 		VarDeclParserOptions options;
 		options.isStateVariable = true;
 		options.allowInitialValue = true;
+
 		auto node = parseVariableDeclaration(options, type);
 		expectToken(Token::Semicolon);
+
 		return node;
 	}
 }
@@ -1819,6 +1861,7 @@ ASTPointer<ASTString> Parser::expectIdentifierToken()
 {
 	// do not advance on success
 	expectToken(Token::Identifier, false);
+
 	return getLiteralAndAdvance();
 }
 

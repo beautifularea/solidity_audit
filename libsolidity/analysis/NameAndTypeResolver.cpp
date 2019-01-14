@@ -54,6 +54,7 @@ NameAndTypeResolver::NameAndTypeResolver(
 
 bool NameAndTypeResolver::registerDeclarations(SourceUnit& _sourceUnit, ASTNode const* _currentScope)
 {
+    std::cout << "NameAndTypeResolver::registerDeclarations" << std::endl;
 	// The helper registers all declarations in m_scopes as a side-effect of its construction.
 	try
 	{
@@ -472,6 +473,7 @@ bool DeclarationRegistrationHelper::registerDeclaration(
 	ErrorReporter& _errorReporter
 )
 {
+    std::cout << "DeclarationRegistrationHelper::registerDeclaration" << std::endl;
 	if (!_errorLocation)
 		_errorLocation = &_declaration.location();
 

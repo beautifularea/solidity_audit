@@ -62,6 +62,8 @@ void ParserBase::expectToken(Token _value, bool _advance)
 	Token tok = m_scanner->currentToken();
 	if (tok != _value)
 	{
+        std::cout << "expectToken : tok != value" << std::endl;
+
 		auto tokenName = [this](Token _token)
 		{
 			if (_token == Token::Identifier)

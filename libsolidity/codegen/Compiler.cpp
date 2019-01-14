@@ -36,19 +36,17 @@ void Compiler::compileContract(
 )
 {
     std::cout << "Compiler compileContract" << std::endl;
-    std::cout << "contracts size : " << _contracts.size() << std::endl;
 
 	ContractCompiler runtimeCompiler(nullptr, m_runtimeContext, m_optimize, m_optimizeRuns);
-
 	runtimeCompiler.compileContract(_contract, _contracts);
-
 	m_runtimeContext.appendAuxiliaryData(_metadata);
 
 	// This might modify m_runtimeContext because it can access runtime functions at
 	// creation time.
 	ContractCompiler creationCompiler(&runtimeCompiler, m_context, m_optimize, 1);
-
 	m_runtimeSub = creationCompiler.compileConstructor(_contract, _contracts);
+
+    std::cout << "compiledContract m_runtimeSub : " << m_runtimeSub << std::endl;
 
 	m_context.optimise(m_optimize, m_optimizeRuns);
 }

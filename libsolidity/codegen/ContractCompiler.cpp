@@ -63,7 +63,7 @@ void ContractCompiler::compileContract(
 	std::map<const ContractDefinition*, eth::Assembly const*> const& _contracts
 )
 {
-    std::cout << "\n zhtian ContractCompiler compileContract" << std::endl;
+    std::cout << "\nzhtian ContractCompiler compileContract" << std::endl;
 
 	CompilerContext::LocationSetter locationSetter(m_context, _contract);
 
@@ -72,8 +72,6 @@ void ContractCompiler::compileContract(
 		// This has to be the first code in the contract.
 		appendDelegatecallCheck();
 
-    std::cout << "contract isLibrary : " << _contract.isLibrary() << std::endl;
-
 	initializeContext(_contract, _contracts);
 	// This generates the dispatch function for externally visible functions
 	// and adds the function to the compilation queue. Additionally internal functions,
@@ -81,8 +79,6 @@ void ContractCompiler::compileContract(
 	appendFunctionSelector(_contract);
 	// This processes the above populated queue until it is empty.
 	appendMissingFunctions();
-
-    std::cout << "end contract isLibrary size : " << _contracts.size()  << std::endl;
 }
 
 size_t ContractCompiler::compileConstructor(
@@ -485,6 +481,8 @@ void ContractCompiler::appendReturnValuePacker(TypePointers const& _typeParamete
 
 void ContractCompiler::registerStateVariables(ContractDefinition const& _contract)
 {
+    std::cout << "registerStateVariables--------" << std::endl;
+
 	for (auto const& var: ContractType(_contract).stateVariables())
 		m_context.addStateVariable(*get<0>(var), get<1>(var), get<2>(var));
 }
