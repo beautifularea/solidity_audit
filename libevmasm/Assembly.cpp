@@ -40,6 +40,8 @@ using namespace langutil;
 
 void Assembly::append(Assembly const& _a)
 {
+    std::cout << "--------------append(_a) ----------------" << std::endl;
+
 	auto newDeposit = m_deposit + _a.deposit();
 	for (AssemblyItem i: _a.m_items)
 	{
@@ -73,15 +75,19 @@ void Assembly::append(Assembly const& _a)
 
 void Assembly::append(Assembly const& _a, int _deposit)
 {
+    std::cout << "append(_a, dep)" << std::endl;
+
 	assertThrow(_deposit <= _a.m_deposit, InvalidDeposit, "");
 
 	append(_a);
+
 	while (_deposit++ < _a.m_deposit)
 		append(Instruction::POP);
 }
 
 AssemblyItem const& Assembly::append(AssemblyItem const& _i)
 {
+    std::cout << "append item" << std::endl;
 	assertThrow(m_deposit >= 0, AssemblyException, "Stack underflow.");
 	m_deposit += _i.deposit();
 	m_items.emplace_back(_i);
@@ -92,7 +98,7 @@ AssemblyItem const& Assembly::append(AssemblyItem const& _i)
 
 void Assembly::injectStart(AssemblyItem const& _i)
 {
-    std::cout << "injectStart" << std::endl;
+    std::cout << "injectStart item" << std::endl;
 
 	m_items.insert(m_items.begin(), _i);
 }
@@ -518,7 +524,7 @@ map<u256, u256> Assembly::optimiseInternal(
 
 LinkerObject const& Assembly::assemble() const
 {
-    std::cout << "Assembly.assemble" << std::endl;
+    std::cout << "\n\nAssembly.assemble" << std::endl;
 
 	if (!m_assembledObject.bytecode.empty())
     {
@@ -533,6 +539,8 @@ LinkerObject const& Assembly::assemble() const
         std::cout << "zhtian opcodes sub" << std::endl;
         
 		sub->assemble();
+
+        std::cout << "zhtian opcodes sub ... end" << std::endl;
 
 		for (size_t tagPos: sub->m_tagPositionsInBytecode)
 			if (tagPos != size_t(-1) && tagPos > subTagSize)
@@ -560,6 +568,7 @@ LinkerObject const& Assembly::assemble() const
     {
         std::cout << "sub ..." << std::endl;
 		bytesRequiredIncludingData += sub->assemble().bytecode.size();
+        std::cout << "sub ... end" << std::endl;
     }
 
 	unsigned bytesPerDataRef = dev::bytesRequired(bytesRequiredIncludingData);
@@ -568,6 +577,8 @@ LinkerObject const& Assembly::assemble() const
     std::cout << "bytesRequiredIncludingData : " << bytesRequiredIncludingData << std::endl;
 
 	ret.bytecode.reserve(bytesRequiredIncludingData);
+
+    std::cout << "items : " << m_items.size() << std::endl;
 
 	for (AssemblyItem const& i: m_items)
 	{
@@ -578,46 +589,75 @@ LinkerObject const& Assembly::assemble() const
 		switch (i.type())
 		{
 		case Operation:
+            std::cout << "Operation" << std::endl;
 			ret.bytecode.push_back((uint8_t)i.instruction());
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		case PushString:
 		{
+            std::cout << "PUSHString" << std::endl;
 			ret.bytecode.push_back((uint8_t)Instruction::PUSH32);
 			unsigned ii = 0;
+
 			for (auto j: m_strings.at((h256)i.data()))
+            {
 				if (++ii > 32)
 					break;
 				else
+                {
+                    std::cout << "j : " << (uint8_t)j  << std::endl;
 					ret.bytecode.push_back((uint8_t)j);
+                }
+            }
 			while (ii++ < 32)
 				ret.bytecode.push_back(0);
+
+            std::cout << "end PUSHString" << std::endl;
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		}
 		case Push:
 		{
+            std::cout << "Push" << std::endl;
+
 			uint8_t b = max<unsigned>(1, dev::bytesRequired(i.data()));
+            std::cout << "b : " << (unsigned)b << std::endl;
+            std::cout << "PUsh : " << (uint8_t)Instruction::PUSH1 - 1 + b << " " << i.data() << std::endl;
 			ret.bytecode.push_back((uint8_t)Instruction::PUSH1 - 1 + b);
+
 			ret.bytecode.resize(ret.bytecode.size() + b);
 			bytesRef byr(&ret.bytecode.back() + 1 - b, b);
 			toBigEndian(i.data(), byr);
+
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		}
 		case PushTag:
 		{
+            std::cout << "PushTag" << std::endl;
+
 			ret.bytecode.push_back(tagPush);
 			tagRef[ret.bytecode.size()] = i.splitForeignPushTag();
 			ret.bytecode.resize(ret.bytecode.size() + bytesPerTag);
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		}
 		case PushData:
+            std::cout << "PushData" << std::endl;
+
 			ret.bytecode.push_back(dataRefPush);
 			dataRef.insert(make_pair((h256)i.data(), ret.bytecode.size()));
 			ret.bytecode.resize(ret.bytecode.size() + bytesPerDataRef);
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		case PushSub:
+            std::cout << "PushSub" << std::endl;
 			ret.bytecode.push_back(dataRefPush);
 			subRef.insert(make_pair(size_t(i.data()), ret.bytecode.size()));
 			ret.bytecode.resize(ret.bytecode.size() + bytesPerDataRef);
+
+            std::cout << "dataRefpush : " << dataRefPush << std::endl;
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		case PushSubSize:
 		{
@@ -629,23 +669,31 @@ LinkerObject const& Assembly::assemble() const
 			ret.bytecode.resize(ret.bytecode.size() + b);
 			bytesRef byr(&ret.bytecode.back() + 1 - b, b);
 			toBigEndian(s, byr);
+
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
+            std::cout << "push sub ... end" << std::endl;
 			break;
 		}
 		case PushProgramSize:
 		{
+            std::cout << "PushProgramSize" << std::endl;
+
 			ret.bytecode.push_back(dataRefPush);
 			sizeRef.push_back(ret.bytecode.size());
 			ret.bytecode.resize(ret.bytecode.size() + bytesPerDataRef);
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		}
 		case PushLibraryAddress:
 			ret.bytecode.push_back(uint8_t(Instruction::PUSH20));
 			ret.linkReferences[ret.bytecode.size()] = m_libraries.at(i.data());
 			ret.bytecode.resize(ret.bytecode.size() + 20);
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		case PushDeployTimeAddress:
 			ret.bytecode.push_back(uint8_t(Instruction::PUSH20));
 			ret.bytecode.resize(ret.bytecode.size() + 20);
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		case Tag:
 			assertThrow(i.data() != 0, AssemblyException, "Invalid tag position.");
@@ -654,6 +702,7 @@ LinkerObject const& Assembly::assemble() const
 			assertThrow(m_tagPositionsInBytecode[size_t(i.data())] == size_t(-1), AssemblyException, "Duplicate tag position.");
 			m_tagPositionsInBytecode[size_t(i.data())] = ret.bytecode.size();
 			ret.bytecode.push_back((uint8_t)Instruction::JUMPDEST);
+            std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		default:
 			BOOST_THROW_EXCEPTION(InvalidOpcode());
@@ -676,10 +725,15 @@ LinkerObject const& Assembly::assemble() const
 		}
 
         std::cout << "m_sub append ..." << std::endl;
+
+    std::cout << "solidity::disassemble(ret.bytecode) : " << solidity::disassemble(ret.bytecode) << std::endl;
 		ret.append(m_subs[i]->assemble());
 	}
+
 	for (auto const& i: tagRef)
 	{
+        std::cout << "tagRef" << std::endl;
+
 		size_t subId;
 		size_t tagId;
 		tie(subId, tagId) = i.second;
@@ -694,26 +748,38 @@ LinkerObject const& Assembly::assemble() const
 		assertThrow(dev::bytesRequired(pos) <= bytesPerTag, AssemblyException, "Tag too large for reserved space.");
 		bytesRef r(ret.bytecode.data() + i.first, bytesPerTag);
 		toBigEndian(pos, r);
+
+        std::cout << "end tagRef" << std::endl;
 	}
+        std::cout << "--------m_data size  : ------" << m_data.size() << std::endl;
 	for (auto const& dataItem: m_data)
 	{
+
 		auto references = dataRef.equal_range(dataItem.first);
 		if (references.first == references.second)
 			continue;
+
 		for (auto ref = references.first; ref != references.second; ++ref)
 		{
 			bytesRef r(ret.bytecode.data() + ref->second, bytesPerDataRef);
 			toBigEndian(ret.bytecode.size(), r);
 		}
+
+        std::cout << "solidity::disassemble(ret.bytecode) : " << solidity::disassemble(dataItem.second) << std::endl;
+
 		ret.bytecode += dataItem.second;
 	}
 
 	ret.bytecode += m_auxiliaryData;
 
+    std::cout << "sizeRef : " << sizeRef.size() << std::endl;
 	for (unsigned pos: sizeRef)
 	{
 		bytesRef r(ret.bytecode.data() + pos, bytesPerDataRef);
 		toBigEndian(ret.bytecode.size(), r);
 	}
+
+    std::cout << "before return solidity::disassemble(ret.bytecode) : " << solidity::disassemble(ret.bytecode) << std::endl;
+
 	return ret;
 }
