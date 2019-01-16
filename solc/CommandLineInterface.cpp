@@ -269,8 +269,6 @@ void CommandLineInterface::handleBinary(string const& _contract)
 
 void CommandLineInterface::handleOpcode(string const& _contract)
 {
-    sout() << "zhtian handleOpCode" << endl;
-
 	if (m_args.count(g_argOutputDir))
 		createFile(m_compiler->filesystemFriendlyName(_contract) + ".opcode", solidity::disassemble(m_compiler->object(_contract).bytecode));
 	else
@@ -283,8 +281,6 @@ void CommandLineInterface::handleOpcode(string const& _contract)
 
 void CommandLineInterface::handleBytecode(string const& _contract)
 {
-    sout() << "zhtian handleBytecode" << endl;
-
 	if (m_args.count(g_argOpcodes))
 		handleOpcode(_contract);
 	if (m_args.count(g_argBinary) || m_args.count(g_argBinaryRuntime))
@@ -1128,8 +1124,6 @@ void CommandLineInterface::handleAst(string const& _argStr)
 
 bool CommandLineInterface::actOnInput()
 {
-    sout() << "actOnInput" << endl;
-    
 	if (m_args.count(g_argStandardJSON) || m_onlyAssemble)
 		// Already done in "processInput" phase.
 		return true;
@@ -1324,8 +1318,6 @@ bool CommandLineInterface::assemble(
 
 void CommandLineInterface::outputCompilationResults()
 {
-    sout() << "zhtian CommandLineInterface::outputCompilationResults" << endl;
-
 	handleCombinedJSON();
 
 	// do we need AST output?
@@ -1336,8 +1328,6 @@ void CommandLineInterface::outputCompilationResults()
 	vector<string> contracts = m_compiler->contractNames();
 	for (string const& contract: contracts)
 	{
-        sout() << "contract : " << contract << endl;
-
 		if (needsHumanTargetedStdout(m_args))
 			sout() << endl << "======= " << contract << " =======" << endl;
 
