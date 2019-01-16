@@ -950,13 +950,9 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 	}
 	try
 	{
-        std::cout << "compiler . assembledObject" << std::endl;
 		// Assemble deployment (incl. runtime)  object.
-
-        std::cout << "-----------call assembledObject()-----------" << std::endl;
 		compiledContract.object = compiler->assembledObject();
-        std::cout << solidity::disassemble(compiledContract.object.bytecode) << std::endl;
-        std::cout << "-----------end call assembledObject()-----------" << std::endl;
+        std::cout << "获取合约的bytecode : " << solidity::disassemble(compiledContract.object.bytecode) << std::endl;
 	}
 	catch(eth::AssemblyException const&)
 	{
@@ -967,17 +963,14 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 	{
 		// Assemble runtime object.
 		compiledContract.runtimeObject = compiler->runtimeObject();
+        std::cout << "获取合约的runtime code : " << solidity::disassemble(compiledContract.runtimeObject.bytecode) << std::endl;
 	}
 	catch(eth::AssemblyException const&)
 	{
 		solAssert(false, "Assembly exception for deployed bytecode");
 	}
     
-    std::cout << "\n -------call assemble---------------\n";
 	_compiledContracts[compiledContract.contract] = &compiler->assembly();
-    std::cout << "\n ---------end call assemble---------\n";
-
-    std::cout << "-------------------------EEEEEEEEEEEEEEEEENd----------------" << std::endl;
 }
 
 CompilerStack::Contract const& CompilerStack::contract(string const& _contractName) const

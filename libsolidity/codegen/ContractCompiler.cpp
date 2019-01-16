@@ -63,7 +63,7 @@ void ContractCompiler::compileContract(
 	std::map<const ContractDefinition*, eth::Assembly const*> const& _contracts
 )
 {
-    std::cout << "\nzhtian ContractCompiler compileContract" << std::endl;
+    std::cout << "ContractCompiler::compileContract" << std::endl;
 
 	CompilerContext::LocationSetter locationSetter(m_context, _contract);
 
@@ -72,12 +72,17 @@ void ContractCompiler::compileContract(
 		// This has to be the first code in the contract.
 		appendDelegatecallCheck();
 
+    std::cout << "初始化执行环境上下文" << std::endl;
 	initializeContext(_contract, _contracts);
+
 	// This generates the dispatch function for externally visible functions
 	// and adds the function to the compilation queue. Additionally internal functions,
 	// which are referenced directly or indirectly will be added.
+    std::cout << "根据合约内使用到的函数进行汇编构造" << std::endl;
 	appendFunctionSelector(_contract);
+
 	// This processes the above populated queue until it is empty.
+    std::cout << "链接不公开的函数(非public 声名)" << std::endl;
 	appendMissingFunctions();
 }
 
@@ -86,8 +91,6 @@ size_t ContractCompiler::compileConstructor(
 	std::map<const ContractDefinition*, eth::Assembly const*> const& _contracts
 )
 {
-    std::cout << "-----compileConstructor----" << std::endl;
-
 	CompilerContext::LocationSetter locationSetter(m_context, _contract);
 	if (_contract.isLibrary())
 		return deployLibrary(_contract);
