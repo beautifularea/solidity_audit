@@ -71,6 +71,8 @@ bool NameAndTypeResolver::registerDeclarations(SourceUnit& _sourceUnit, ASTNode 
 
 bool NameAndTypeResolver::performImports(SourceUnit& _sourceUnit, map<string, SourceUnit const*> const& _sourceUnits)
 {
+    std::cout << "这里是在干什么，未有理解？？？" << std::endl;
+
 	DeclarationContainer& target = *m_scopes.at(&_sourceUnit);
 	bool error = false;
 	for (auto const& node: _sourceUnit.nodes())

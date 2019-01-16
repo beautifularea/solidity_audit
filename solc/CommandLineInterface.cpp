@@ -890,7 +890,6 @@ bool CommandLineInterface::processInput()
 
 		for (auto const& sourceCode: m_sourceCodes)
         {
-            sout() << "Call addSource-------" << endl;
             sout() << "读取m_sourceCodes（std::map）中的key，value添加到m_compiler（dev::solidity::CompilerStack）中。" << endl;
 			m_compiler->addSource(sourceCode.first, sourceCode.second);
         }

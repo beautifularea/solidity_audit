@@ -45,14 +45,14 @@ namespace solidity
 class Parser::ASTNodeFactory
 {
 public:
-	explicit ASTNodeFactory(Parser const& _parser):
-		m_parser(_parser), m_location{_parser.position(), -1, _parser.source()} {}
-	ASTNodeFactory(Parser const& _parser, ASTPointer<ASTNode> const& _childNode):
-		m_parser(_parser), m_location{_childNode->location()} {}
+	explicit ASTNodeFactory(Parser const& _parser): m_parser(_parser), m_location{_parser.position(), -1, _parser.source()} {}
+
+	ASTNodeFactory(Parser const& _parser, ASTPointer<ASTNode> const& _childNode) : m_parser(_parser), m_location{_childNode->location()} {}
 
 	void markEndPosition() { m_location.end = m_parser.endPosition(); }
 	void setLocation(SourceLocation const& _location) { m_location = _location; }
 	void setLocationEmpty() { m_location.end = m_location.start; }
+
 	/// Set the end position to the one of the given node.
 	void setEndPositionFromNode(ASTPointer<ASTNode> const& _node) { m_location.end = _node->location().end; }
 
@@ -60,8 +60,10 @@ public:
 	ASTPointer<NodeType> createNode(Args&& ... _args)
 	{
 		solAssert(m_location.source, "");
+
 		if (m_location.end < 0)
 			markEndPosition();
+
 		return make_shared<NodeType>(m_location, std::forward<Args>(_args)...);
 	}
 
@@ -72,8 +74,7 @@ private:
 
 ASTPointer<SourceUnit> Parser::parse(shared_ptr<Scanner> const& _scanner)
 {
-    std::cout << "Parser . parse" << std::endl;
-
+    std::cout << "进入到Parse方法..." << std::endl;
 	try
 	{
 		m_recursionDepth = 0;
@@ -85,22 +86,23 @@ ASTPointer<SourceUnit> Parser::parse(shared_ptr<Scanner> const& _scanner)
 
 		while (m_scanner->currentToken() != Token::EOS)
 		{
-            std::cout << "currentToken != EOS" << std::endl;
 			switch (m_scanner->currentToken())
 			{
 			case Token::Pragma:
-                std::cout << "pragma" << std::endl;
+                std::cout << "解析Pragma..." << std::endl;
 				nodes.push_back(parsePragmaDirective());
+                std::cout << "解析Pragma　完毕。" << std::endl;
 				break;
 			case Token::Import:
-                std::cout << "import" << std::endl;
+                std::cout << "解析Import..." << std::endl;
 				nodes.push_back(parseImportDirective());
 				break;
 			case Token::Interface:
 			case Token::Contract:
 			case Token::Library:
-                std::cout << "interface or contract or library" << std::endl;
+                std::cout << "解析Contract定义的代码..." << std::endl;
 				nodes.push_back(parseContractDefinition());
+                std::cout << "解析Contrac代码完毕." << std::endl;
 				break;
 			default:
 				fatalParserError(string("Expected pragma, import directive or contract/interface/library definition."));
@@ -115,12 +117,14 @@ ASTPointer<SourceUnit> Parser::parse(shared_ptr<Scanner> const& _scanner)
 	{
 		if (m_errorReporter.errors().empty())
 			throw; // Something is weird here, rather throw again.
+
 		return nullptr;
 	}
 }
 
 void Parser::parsePragmaVersion(vector<Token> const& tokens, vector<string> const& literals)
 {
+    std::cout << "解析PragmaVersion" << std::endl;
 	SemVerMatchExpressionParser parser(tokens, literals);
 	auto matchExpression = parser.parse();
 	static SemVerVersion const currentVersion{string(VersionString)};
@@ -157,16 +161,19 @@ ASTPointer<PragmaDirective> Parser::parsePragmaDirective()
 			string literal = m_scanner->currentLiteral();
 			if (literal.empty() && TokenTraits::toString(token))
 				literal = TokenTraits::toString(token);
+
 			literals.push_back(literal);
 			tokens.push_back(token);
 
-            std::cout << "literal : " << literal << "\t";
+            std::cout << "literal : " << literal << "\n";
 		}
 		m_scanner->next();
 	}
 	while (m_scanner->currentToken() != Token::Semicolon && m_scanner->currentToken() != Token::EOS);
+    //结束条件是：;/EOS
 
 	nodeFactory.markEndPosition();
+
 	expectToken(Token::Semicolon);
 
 	if (literals.size() >= 2 && literals[0] == "solidity")
@@ -275,36 +282,40 @@ ContractDefinition::ContractKind Parser::parseContractKind()
 
 ASTPointer<ContractDefinition> Parser::parseContractDefinition()
 {
-    std::cout << "\nParse.parseContractDefinition" << std::endl;
-
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
 	ASTPointer<ASTString> docString;
 
 	if (m_scanner->currentCommentLiteral() != "")
+    {
 		docString = make_shared<ASTString>(m_scanner->currentCommentLiteral());
+        std::cout << "doxy doc : " << *docString << std::endl;
+    }
     else
     {
-        std::cout << "no comments" << std::endl;
+        std::cout << "no doxy doc comments" << std::endl;
     }
 
 	ContractDefinition::ContractKind contractKind = parseContractKind();
 	ASTPointer<ASTString> name = expectIdentifierToken();
-    std::cout << "identifier name : " << *name << std::endl;
+    std::cout << "合约的名字 : " << *name << std::endl;
 
 	vector<ASTPointer<InheritanceSpecifier>> baseContracts;
     if (m_scanner->currentToken() == Token::Is)
     {
+        std::cout << "解析合约继承关系..." << std::endl;
         do
         {
             m_scanner->next();
             baseContracts.push_back(parseInheritanceSpecifier());
         }
         while (m_scanner->currentToken() == Token::Comma);
+
+        std::cout << "合约继承解析完毕。" << std::endl;
     }
     else
     {
-        std::cout << "current token not Is" << std::endl;
+        std::cout << "当前合约没有继承关系." << std::endl;
     }
 
     vector<ASTPointer<ASTNode>> subNodes;
@@ -312,17 +323,20 @@ ASTPointer<ContractDefinition> Parser::parseContractDefinition()
 	while (true)
 	{
 		Token currentTokenValue = m_scanner->currentToken();
-        std::cout << "token value : " << TokenTraits::toString(currentTokenValue) << "\n";
-
+        std::cout << "当前的Token value : " << TokenTraits::toString(currentTokenValue) << "\n";
 		if (currentTokenValue == Token::RBrace)
         {
             std::cout << "token value = RBrace" << std::endl;
 			break;
         }
 		else if (currentTokenValue == Token::Function || currentTokenValue == Token::Constructor)
+        {   
+            std::cout << "解析function的定义..." << std::endl;
 			// This can be a function or a state variable of function type (especially
 			// complicated to distinguish fallback function from function type state variable)
 			subNodes.push_back(parseFunctionDefinitionOrFunctionTypeStateVariable());
+            std::cout << "function 的定义解析完毕." << std::endl;
+        }
 		else if (currentTokenValue == Token::Struct)
 			subNodes.push_back(parseStructDefinition());
 		else if (currentTokenValue == Token::Enum)
@@ -434,8 +448,6 @@ StateMutability Parser::parseStateMutability()
 
 Parser::FunctionHeaderParserResult Parser::parseFunctionHeader(bool _forceEmptyName, bool _allowModifiers)
 {
-    std::cout << "Parser::parseFunctionHeader" << std::endl;
-
 	RecursionGuard recursionGuard(*this);
 	FunctionHeaderParserResult result;
 
@@ -461,12 +473,15 @@ Parser::FunctionHeaderParserResult Parser::parseFunctionHeader(bool _forceEmptyN
     {
 		result.name = expectIdentifierToken();
 
-        std::cout << "result name : " << *(result.name) << std::endl;
+        std::cout << "方法名 : " << *(result.name) << std::endl;
     }
 
 	VarDeclParserOptions options;
 	options.allowLocationSpecifier = true;
+    std::cout << "开始解析方法参数列表..." << std::endl;
 	result.parameters = parseParameterList(options);
+    std::cout << "方法参数列表解析完毕." << std::endl;
+
 	while (true)
 	{
 		Token token = m_scanner->currentToken();
@@ -536,19 +551,21 @@ Parser::FunctionHeaderParserResult Parser::parseFunctionHeader(bool _forceEmptyN
 
 ASTPointer<ASTNode> Parser::parseFunctionDefinitionOrFunctionTypeStateVariable()
 {
-    std::cout << "Parser::parseFunctionDefinitionOrFunctionTypeStateVariable" << std::endl;
-
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
 
 	ASTPointer<ASTString> docstring;
 	if (m_scanner->currentCommentLiteral() != "")
+    {
 		docstring = make_shared<ASTString>(m_scanner->currentCommentLiteral());
+        std::cout << "doxy doc /// : " << *docstring << std::endl;
+    }
     else
         std::cout << "no comments" << std::endl;
 
+    std::cout << "开始解析function头..." << std::endl;
 	FunctionHeaderParserResult header = parseFunctionHeader(false, true);
-
+    std::cout << "function 头解析完毕。" << std::endl;
 	if (
 		header.isConstructor ||
 		!header.modifiers.empty() ||
@@ -557,16 +574,21 @@ ASTPointer<ASTNode> Parser::parseFunctionDefinitionOrFunctionTypeStateVariable()
 		m_scanner->currentToken() == Token::LBrace
 	)
 	{
+        std::cout << "这就是一个方法。。。" << std::endl;
+
 		// this has to be a function
 		ASTPointer<Block> block = ASTPointer<Block>();
 		nodeFactory.markEndPosition();
 		if (m_scanner->currentToken() != Token::Semicolon)
 		{
+            std::cout << "开始解析方法block..." << std::endl;
 			block = parseBlock();
 			nodeFactory.setEndPositionFromNode(block);
+            std::cout << "解析方法block完毕." << std::endl;
 		}
 		else
 			m_scanner->next(); // just consume the ';'
+
 		return nodeFactory.createNode<FunctionDefinition>(
 			header.name,
 			header.visibility,
@@ -659,18 +681,21 @@ ASTPointer<VariableDeclaration> Parser::parseVariableDeclaration(
 	ASTPointer<TypeName> const& _lookAheadArrayType
 )
 {
+    std::cout << "解析合约中方法的变量声明...,暂时为理解？？？" << std::endl;
 	RecursionGuard recursionGuard(*this);
-	ASTNodeFactory nodeFactory = _lookAheadArrayType ?
-		ASTNodeFactory(*this, _lookAheadArrayType) : ASTNodeFactory(*this);
+	ASTNodeFactory nodeFactory = _lookAheadArrayType ? ASTNodeFactory(*this, _lookAheadArrayType) : ASTNodeFactory(*this);
 	ASTPointer<TypeName> type;
+
 	if (_lookAheadArrayType)
 		type = _lookAheadArrayType;
 	else
 	{
 		type = parseTypeName(_options.allowVar);
+
 		if (type != nullptr)
 			nodeFactory.setEndPositionFromNode(type);
 	}
+
 	bool isIndexed = false;
 	bool isDeclaredConst = false;
 	Declaration::Visibility visibility(Declaration::Visibility::Default);
@@ -983,30 +1008,34 @@ ASTPointer<Mapping> Parser::parseMapping()
 	return nodeFactory.createNode<Mapping>(keyType, valueType);
 }
 
-ASTPointer<ParameterList> Parser::parseParameterList(
-	VarDeclParserOptions const& _options,
-	bool _allowEmpty
-)
+ASTPointer<ParameterList> Parser::parseParameterList(VarDeclParserOptions const& _options,bool _allowEmpty)
 {
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
 	vector<ASTPointer<VariableDeclaration>> parameters;
 	VarDeclParserOptions options(_options);
+
 	options.allowEmptyName = true;
 	expectToken(Token::LParen);
+
 	if (!_allowEmpty || m_scanner->currentToken() != Token::RParen)
 	{
 		parameters.push_back(parseVariableDeclaration(options));
+
 		while (m_scanner->currentToken() != Token::RParen)
 		{
 			if (m_scanner->currentToken() == Token::Comma && m_scanner->peekNextToken() == Token::RParen)
 				fatalParserError("Unexpected trailing comma in parameter list.");
+
 			expectToken(Token::Comma);
+
 			parameters.push_back(parseVariableDeclaration(options));
 		}
 	}
+
 	nodeFactory.markEndPosition();
 	m_scanner->next();
+
 	return nodeFactory.createNode<ParameterList>(parameters);
 }
 
@@ -1014,19 +1043,29 @@ ASTPointer<Block> Parser::parseBlock(ASTPointer<ASTString> const& _docString)
 {
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
+
 	expectToken(Token::LBrace);
+
 	vector<ASTPointer<Statement>> statements;
+
+    std::cout << "开始解析方法中的语句..." << std::endl;
 	while (m_scanner->currentToken() != Token::RBrace)
 		statements.push_back(parseStatement());
+    std::cout << "方法语句解析完毕。" << std::endl;
+
 	nodeFactory.markEndPosition();
 	expectToken(Token::RBrace);
+
 	return nodeFactory.createNode<Block>(_docString, statements);
 }
 
 ASTPointer<Statement> Parser::parseStatement()
 {
+    std::cout << "正在解析方法中的语句(IF/WHILE/RETURN...等）未深理解？？？..." << std::endl;
+
 	RecursionGuard recursionGuard(*this);
 	ASTPointer<ASTString> docString;
+
 	if (m_scanner->currentCommentLiteral() != "")
 		docString = make_shared<ASTString>(m_scanner->currentCommentLiteral());
 	ASTPointer<Statement> statement;

@@ -285,8 +285,6 @@ string Type::identifier() const
 
 TypePointer Type::fromElementaryTypeName(ElementaryTypeNameToken const& _type)
 {
-    std::cout << "fromElementaryTypeName------------" << std::endl;
-
 	solAssert(TokenTraits::isElementaryTypeName(_type.token()),
 		"Expected an elementary type name but got " + _type.toString()
 	);
@@ -336,8 +334,6 @@ TypePointer Type::fromElementaryTypeName(ElementaryTypeNameToken const& _type)
 
 TypePointer Type::fromElementaryTypeName(string const& _name)
 {
-    std::cout << "fromElementaryTypeName------------ from name : " << _name << std::endl;
-
 	vector<string> nameParts;
 	boost::split(nameParts, _name, boost::is_any_of(" "));
 	solAssert(nameParts.size() == 1 || nameParts.size() == 2, "Cannot parse elementary type: " + _name);
@@ -3056,6 +3052,7 @@ TypePointers FunctionType::parseElementaryTypeVector(strings const& _types)
 
 	TypePointers pointers;
 	pointers.reserve(_types.size());
+
 	for (string const& type: _types)
     {   std::cout << "Type : " << type << "\n";
 		pointers.push_back(Type::fromElementaryTypeName(type));

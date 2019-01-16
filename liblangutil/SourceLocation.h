@@ -49,8 +49,11 @@ struct SourceLocation
 
 	bool isEmpty() const { return start == -1 && end == -1; }
 
+    //代码指示
 	int start = -1;
 	int end = -1;
+
+    //合约代码
 	std::shared_ptr<CharStream> source;
 };
 

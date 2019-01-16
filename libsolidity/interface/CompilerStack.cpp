@@ -169,6 +169,8 @@ bool CompilerStack::parse()
 	for (size_t i = 0; i < sourcesToParse.size(); ++i)
 	{
 		string const& path = sourcesToParse[i];
+
+        std::cout << "此处的数据结构：Source\n" << std::endl;
 		Source& source = m_sources[path];
 
 		source.scanner->reset();
@@ -247,6 +249,7 @@ bool CompilerStack::analyze()
 				return false;
         
         std::cout << "........................................" << std::endl;
+        std::cout << "这块代码没理解？？？" << std::endl;
 		// This is the main name and type resolution loop. Needs to be run for every contract, because
 		// the special variables "this" and "super" must be set appropriately.
 		for (Source const* source: m_sourceOrder)
@@ -274,7 +277,7 @@ bool CompilerStack::analyze()
 					// an error here and instead silently drop any additional contracts we find.
 					if (m_contracts.find(contract->fullyQualifiedName()) == m_contracts.end())
                     {
-                        std::cout << "新合约name : " << contract->fullyQualifiedName() << std::endl;
+                        std::cout << "保存新合约到m_contracts，　新合约name : " << contract->fullyQualifiedName() << std::endl;
 						m_contracts[contract->fullyQualifiedName()].contract = contract;
                     }
 				}
@@ -899,7 +902,7 @@ bool onlySafeExperimentalFeaturesActivated(set<ExperimentalFeature> const& featu
 void CompilerStack::compileContract(ContractDefinition const& _contract,
                                     map<ContractDefinition const*, eth::Assembly const*>& _compiledContracts)
 {
-    std::cout << "CompileStack . compileContract" << std::endl;
+    std::cout << "先判断编译状态，不是AnalysisSuccessful，就发出异常。" << std::endl;
 
 	solAssert(m_stackState >= AnalysisSuccessful, "");
 
@@ -912,34 +915,34 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 
 	for (auto const* dependency: _contract.annotation().contractDependencies)
     {
-        std::cout << "for dependency" << std::endl;
+        std::cout << "合约的一些依赖..." << std::endl;
 		compileContract(*dependency, _compiledContracts);
+        std::cout << "依赖编译完毕。" << std::endl;
     }
 
-    std::cout << "contract fully qualified name : " << _contract.fullyQualifiedName() << std::endl;
+    std::cout << "合约名字的全称 : " << _contract.fullyQualifiedName() << std::endl;
 
-    std::cout << "m_contracts size : " << m_contracts.size() << std::endl; //1 
+    //通过名字，找到合约代码
 	Contract& compiledContract = m_contracts.at(_contract.fullyQualifiedName());
 
+    //新建编译系统
 	shared_ptr<Compiler> compiler = make_shared<Compiler>(m_evmVersion, m_optimize, m_optimizeRuns);
 	compiledContract.compiler = compiler;
 
 	string metadata = createMetadata(compiledContract);
-    std::cout << "create metadata : " << metadata << std::endl;
-
 	compiledContract.metadata = metadata;
+    std::cout << "创建元数据 : " << metadata << std::endl;
 
-	bytes cborEncodedMetadata = createCBORMetadata(
-		metadata,
-		!onlySafeExperimentalFeaturesActivated(_contract.sourceUnit().annotation().experimentalFeatures)
-	);
+	bytes cborEncodedMetadata = createCBORMetadata(metadata,
+                                                   !onlySafeExperimentalFeaturesActivated(_contract.sourceUnit().annotation().experimentalFeatures));
+    std::cout << "生成CBOR 元数据 : " << toHex(cborEncodedMetadata) << std::endl;
 
 	try
 	{
-        std::cout << "invoke compiler->compileContract" << std::endl;
-
+        std::cout << "开始编译合约代码..." << std::endl;
 		// Run optimiser and compile the contract.
 		compiler->compileContract(_contract, _compiledContracts, cborEncodedMetadata);
+        std::cout << "合约代码编译完毕。" << std::endl;
 	}
 	catch(eth::OptimizerException const&)
 	{

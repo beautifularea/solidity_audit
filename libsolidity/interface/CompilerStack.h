@@ -259,8 +259,12 @@ private:
 	struct Source
 	{
 		std::shared_ptr<langutil::Scanner> scanner;
+
+        //class SourceUnit: public ASTNode
 		std::shared_ptr<SourceUnit> ast;
+
 		bool isLibrary = false;
+
 		h256 mutable keccak256HashCached;
 		h256 mutable swarmHashCached;
 		void reset() { *this = Source(); }
