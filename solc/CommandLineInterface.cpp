@@ -411,6 +411,8 @@ void CommandLineInterface::handleGasEstimation(string const& _contract)
 
 bool CommandLineInterface::readInputFilesAndConfigureRemappings()
 {
+    sout() << "readInputFilesAndConfigureRemappings" << endl;
+
 	bool ignoreMissing = m_args.count(g_argIgnoreMissingFiles);
 	bool addStdin = false;
 	if (m_args.count(g_argInputFile))
@@ -434,6 +436,7 @@ bool CommandLineInterface::readInputFilesAndConfigureRemappings()
 				addStdin = true;
 			else
 			{
+                sout() << "path : " << path << endl;
 				auto infile = boost::filesystem::path(path);
 				if (!boost::filesystem::exists(infile))
 				{
@@ -461,8 +464,13 @@ bool CommandLineInterface::readInputFilesAndConfigureRemappings()
 					continue;
 				}
 
+                sout() << "准备读取源码文件 1 " << endl;
+                sout() << "infile : " << infile.string() << endl;
+                sout() << "infile generic_string : " << infile.generic_string() << endl;
 				m_sourceCodes[infile.generic_string()] = dev::readFileAsString(infile.string());
+
 				path = boost::filesystem::canonical(infile).string();
+                sout() << "源码的绝对路径 : " << path << endl;
 			}
 			m_allowedDirectories.push_back(boost::filesystem::path(path).remove_filename());
 		}
@@ -484,6 +492,7 @@ bool CommandLineInterface::parseLibraryOption(string const& _input)
 	try
 	{
 		if (fs::is_regular_file(_input))
+                sout() << "准备读取源码文件 2 ";
 			data = readFileAsString(_input);
 	}
 	catch (fs::filesystem_error const&)
@@ -733,7 +742,7 @@ Allowed options)",
 
 bool CommandLineInterface::processInput()
 {
-    sout() << "zhtian processInput" << endl;
+    sout() << "CommandLineInterface::processInput" << endl;
 
 	ReadCallback::Callback fileReader = [this](string const& _path)
 	{
@@ -763,6 +772,7 @@ bool CommandLineInterface::processInput()
 			if (!boost::filesystem::is_regular_file(canonicalPath))
 				return ReadCallback::Result{false, "Not a valid file."};
 
+                sout() << "准备读取源码文件 3 ";
 			auto contents = dev::readFileAsString(canonicalPath.string());
             sout() << "zhtian contens : " << contents << endl;
 			m_sourceCodes[path.generic_string()] = contents;
@@ -866,6 +876,7 @@ bool CommandLineInterface::processInput()
 		return link();
 	}
 
+    sout() << "新建CompileStack" << endl;
 	m_compiler.reset(new CompilerStack(fileReader));
 
 	SourceReferenceFormatter formatter(serr(false));
@@ -876,21 +887,31 @@ bool CommandLineInterface::processInput()
 			m_compiler->useMetadataLiteralSources(true);
 		if (m_args.count(g_argInputFile))
 			m_compiler->setRemappings(m_remappings);
+
 		for (auto const& sourceCode: m_sourceCodes)
         {
             sout() << "Call addSource-------" << endl;
+            sout() << "读取m_sourceCodes（std::map）中的key，value添加到m_compiler（dev::solidity::CompilerStack）中。" << endl;
 			m_compiler->addSource(sourceCode.first, sourceCode.second);
         }
 		if (m_args.count(g_argLibraries))
 			m_compiler->setLibraries(m_libraries);
+
+        //设置编译器中evm的version
 		m_compiler->setEVMVersion(m_evmVersion);
+
 		// TODO: Perhaps we should not compile unless requested
 		bool optimize = m_args.count(g_argOptimize) > 0;
 		unsigned runs = m_args[g_argOptimizeRuns].as<unsigned>();
 		m_compiler->setOptimiserSettings(optimize, runs);
 
+        //执行编译操作。
+        sout() << "正在编译......." << endl;
 		bool successful = m_compiler->compile();
+        sout() << "编译结果 : " << successful << endl;
 
+        //打印错误、警告结果
+        sout() << "打印m_compiler中的错误，警告结果 : " << endl;
 		for (auto const& error: m_compiler->errors())
 		{
 			g_hasOutput = true;

@@ -336,6 +336,8 @@ TypePointer Type::fromElementaryTypeName(ElementaryTypeNameToken const& _type)
 
 TypePointer Type::fromElementaryTypeName(string const& _name)
 {
+    std::cout << "fromElementaryTypeName------------ from name : " << _name << std::endl;
+
 	vector<string> nameParts;
 	boost::split(nameParts, _name, boost::is_any_of(" "));
 	solAssert(nameParts.size() == 1 || nameParts.size() == 2, "Cannot parse elementary type: " + _name);

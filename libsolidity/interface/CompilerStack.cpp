@@ -125,21 +125,28 @@ void CompilerStack::reset(bool _keepSources)
 
 bool CompilerStack::addSource(string const& _name, string const& _content, bool _isLibrary)
 {
-    std::cout << "addSource name : " << _name << " content : --------\n" << _content << "-----------\n" << std::endl;
+    std::cout << "CompilerStack::addSource\n源码文件名称 ： " << _name << "\n源码内容 ： [" << _content << "]" << std::endl;
 
 	bool existed = m_sources.count(_name) != 0;
+
+    std::cout << "reset 一些CompilerStack初始状态" << std::endl;
 	reset(true);
 
     //make Scanner( && add content)
+    std::cout << "用name和content作为参数，同时创建scanner" << std::endl;
+
 	m_sources[_name].scanner = make_shared<Scanner>(CharStream(_content, _name));
 	m_sources[_name].isLibrary = _isLibrary;
 
+    std::cout << "设置编译状态为 SourcesSet" << std::endl;
 	m_stackState = SourcesSet;
 	return existed;
 }
 
 bool CompilerStack::parse()
 {
+    std::cout << "编译阶段之　parse " << std::endl;
+
 	//reset
 	if (m_stackState != SourcesSet)
 		return false;
@@ -147,27 +154,28 @@ bool CompilerStack::parse()
 	m_errorReporter.clear();
 	ASTNode::resetID();
 
-    /* by zhtian
 	if (SemVerVersion{string(VersionString)}.isPrerelease())
 		m_errorReporter.warning("This is a pre-release compiler version, please do not use it in production.");
-    */
 
+    std::cout << "搜集需要ｐａｒｓｅ的文件名称" << std::endl;
 	vector<string> sourcesToParse;
 	for (auto const& s: m_sources)
     {
-        std::cout << "s : " << s.first << "\t";
+        std::cout << "名称 : " << s.first << "\n";
 		sourcesToParse.push_back(s.first);
     }
 
-    std::cout << "sourcesToParse : " << sourcesToParse.size() << std::endl;
+    std::cout << "需要Parse的源码文件的个数　: " << sourcesToParse.size() << std::endl;
 	for (size_t i = 0; i < sourcesToParse.size(); ++i)
 	{
 		string const& path = sourcesToParse[i];
-        std::cout << "path : " << path << std::endl;
-
 		Source& source = m_sources[path];
+
 		source.scanner->reset();
+
+        std::cout << "调用parse方法，scanner作为参数，进行解析，结果返回给ａｓｔ" << std::endl;
 		source.ast = Parser(m_errorReporter).parse(source.scanner);
+        std::cout << "parse 完毕！" << std::endl;
 
 		if (!source.ast)
 			solAssert(!Error::containsOnlyWarnings(m_errorReporter.errors()), "Parser returned null but did not report error.");
@@ -185,8 +193,10 @@ bool CompilerStack::parse()
 			}
 		}
 	}
+
 	if (Error::containsOnlyWarnings(m_errorReporter.errors()))
 	{
+        std::cout << "parse的过程中，如果只有一些警告，则认为是parse成功的，设置为　ParsingSuccessful." << std::endl;
 		m_stackState = ParsingSuccessful;
 		return true;
 	}
@@ -196,46 +206,47 @@ bool CompilerStack::parse()
 
 bool CompilerStack::analyze()
 {
-    std::cout << "zhtian compilerStack_analyze" << std::endl;
+    std::cout << "进入到编译阶段之analyze" << std::endl;
 
+    std::cout << "如果parse结果不为 ParsingSuccessful ，直接返回ｆａｌｓｅ" << std::endl;
 	if (m_stackState != ParsingSuccessful)
 		return false;
 
 	resolveImports();
 
 	bool noErrors = true;
-
 	try {
-
-		std::cout << "syntax checker" << std::endl;
+		std::cout << "进入到语法检查阶段..." << std::endl;
         SyntaxChecker syntaxChecker(m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			if (!syntaxChecker.checkSyntax(*source->ast))
 				noErrors = false;
+        std::cout << "语法检查完毕，结果是：" << noErrors << std::endl;
 
-        std::cout << "docstring analyser" << std::endl;
+        std::cout << "进入到ｄｏｃ分析阶段..." << std::endl;
 		DocStringAnalyser docStringAnalyser(m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			if (!docStringAnalyser.analyseDocStrings(*source->ast))
 				noErrors = false;
+        std::cout << "ｄｏｃ分析阶段完毕，结果是：" << noErrors << std::endl;
 
-        std::cout << "nameAndTypeResolver" << std::endl;
+        std::cout << "进入到关键字检查阶段..." << std::endl;
 		m_globalContext = make_shared<GlobalContext>();
-        std::cout << "call NameAndTypeResolver" << std::endl;
 		NameAndTypeResolver resolver(m_globalContext->declarations(), m_scopes, m_errorReporter);
-        std::cout << "call registerDeclarations" << std::endl;
 		for (Source const* source: m_sourceOrder)
 			if (!resolver.registerDeclarations(*source->ast))
 				return false;
+        std::cout << "关键字检查完毕。" << std::endl;
 
-        std::cout << "perforImports" << std::endl;
 		map<string, SourceUnit const*> sourceUnitsByName;
 		for (auto& source: m_sources)
 			sourceUnitsByName[source.first] = source.second.ast.get();
+
 		for (Source const* source: m_sourceOrder)
 			if (!resolver.performImports(*source->ast, sourceUnitsByName))
 				return false;
-
+        
+        std::cout << "........................................" << std::endl;
 		// This is the main name and type resolution loop. Needs to be run for every contract, because
 		// the special variables "this" and "super" must be set appropriately.
 		for (Source const* source: m_sourceOrder)
@@ -245,8 +256,17 @@ bool CompilerStack::analyze()
 					m_globalContext->setCurrentContract(*contract);
 
 					if (!resolver.updateDeclaration(*m_globalContext->currentThis())) return false;
+
 					if (!resolver.updateDeclaration(*m_globalContext->currentSuper())) return false;
-					if (!resolver.resolveNamesAndTypes(*contract)) return false;
+
+                    std::cout << "in double for" << std::endl;
+					if (!resolver.resolveNamesAndTypes(*contract)) 
+                    {   
+                        std::cout << "return false" << std::endl;
+
+                        return false;
+                    }
+                    std::cout << "after in double for" << std::endl;
 
 					// Note that we now reference contracts by their fully qualified names, and
 					// thus contracts can only conflict if declared in the same source file.  This
@@ -254,21 +274,24 @@ bool CompilerStack::analyze()
 					// an error here and instead silently drop any additional contracts we find.
 					if (m_contracts.find(contract->fullyQualifiedName()) == m_contracts.end())
                     {
-                        std::cout << "NNNNNNNNNNNNNNNNNew contract AAAAAAAAAAAAAAddd" << std::endl;
+                        std::cout << "新合约name : " << contract->fullyQualifiedName() << std::endl;
 						m_contracts[contract->fullyQualifiedName()].contract = contract;
                     }
 				}
+        std::cout << "........................................" << std::endl;
 
 		// Next, we check inheritance, overrides, function collisions and other things at
 		// contract or function level.
 		// This also calculates whether a contract is abstract, which is needed by the
 		// type checker.
+        std::cout << "进入到合约Ｌｅｖｅｌ的检查..." << std::endl;
 		ContractLevelChecker contractLevelChecker(m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			for (ASTPointer<ASTNode> const& node: source->ast->nodes())
 				if (ContractDefinition* contract = dynamic_cast<ContractDefinition*>(node.get()))
 					if (!contractLevelChecker.check(*contract))
 						noErrors = false;
+        std::cout << "合约Ｌｅｖｅｌ检查完毕，结果是：" << noErrors << std::endl;
 
 		// New we run full type checks that go down to the expression level. This
 		// cannot be done earlier, because we need cross-contract types and information
@@ -277,6 +300,7 @@ bool CompilerStack::analyze()
 		//
 		// Note: this does not resolve overloaded functions. In order to do that, types of arguments are needed,
 		// which is only done one step later.
+        std::cout << "进入到合约Type的检查..." << std::endl;
 		TypeChecker typeChecker(m_evmVersion, m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			for (ASTPointer<ASTNode> const& node: source->ast->nodes())
@@ -284,19 +308,24 @@ bool CompilerStack::analyze()
 					if (!typeChecker.checkTypeRequirements(*contract))
 						noErrors = false;
 
-        std::cout << "noErrors : " << noErrors << std::endl;
+        std::cout << "合约Type检查完毕，结果是 : " << noErrors << std::endl;
+
 		if (noErrors)
 		{
+            std::cout << "PostTypeChecker..." << std::endl;
 			// Checks that can only be done when all types of all AST nodes are known.
 			PostTypeChecker postTypeChecker(m_errorReporter);
 			for (Source const* source: m_sourceOrder)
 				if (!postTypeChecker.check(*source->ast))
 					noErrors = false;
+
+            std::cout << "PostTypeChecker 完毕，结果是：" << noErrors << std::endl;
 		}
 
-        std::cout << "PostTypeChecker noErrors : " << noErrors << std::endl;
 		if (noErrors)
 		{
+            std::cout << "进入到合约controlFlowAnalyzer阶段..." << std::endl;
+
 			// Control flow graph generator and analyzer. It can check for issues such as
 			// variable is used before it is assigned to.
 			CFG cfg(m_errorReporter);
@@ -311,19 +340,22 @@ bool CompilerStack::analyze()
 					if (!controlFlowAnalyzer.analyze(*source->ast))
 						noErrors = false;
 			}
+
+            std::cout << "合约controlFlowAnalyzer完毕，结果是：" << noErrors << std::endl;
 		}
 
-        std::cout << "ControlFlowAnalyzer noErrors : " << noErrors << std::endl;
 		if (noErrors)
 		{
+            std::cout << "进入到合约静态分析阶段..." << std::endl;
 			// Checks for common mistakes. Only generates warnings.
 			StaticAnalyzer staticAnalyzer(m_errorReporter);
 			for (Source const* source: m_sourceOrder)
 				if (!staticAnalyzer.analyze(*source->ast))
 					noErrors = false;
+
+            std::cout << "静态分析阶段完毕，结果是：" << noErrors << std::endl;
 		}
 
-        std::cout << "StaticAnalyzer noErrors : " << noErrors << std::endl;
 		if (noErrors)
 		{
 			// Check for state mutability in every function.
@@ -331,19 +363,22 @@ bool CompilerStack::analyze()
 			for (Source const* source: m_sourceOrder)
 				ast.push_back(source->ast);
 
+            std::cout << "进入到合约ViewPure检查阶段..." << std::endl;
 			if (!ViewPureChecker(ast, m_errorReporter).check())
 				noErrors = false;
+
+            std::cout << "合约ViewPure检查完毕，结果是：" << noErrors << std::endl;
 		}
 
-        std::cout << "ViewPureChecker noErrors : " << noErrors << std::endl;
 		if (noErrors)
 		{
+            std::cout << "进入到SMT checker阶段..." << std::endl;
 			SMTChecker smtChecker(m_errorReporter, m_smtlib2Responses);
 			for (Source const* source: m_sourceOrder)
 				smtChecker.analyze(*source->ast, source->scanner);
 			m_unhandledSMTLib2Queries += smtChecker.unhandledQueries();
+            std::cout << "SMT checker阶段完毕。" << std::endl;
 		}
-        std::cout << "end noErrors : " << noErrors << std::endl;
 	}
 	catch(FatalError const&)
 	{
@@ -363,9 +398,10 @@ bool CompilerStack::analyze()
 
 bool CompilerStack::parseAndAnalyze()
 {
-    std::cout << "zhtian compilerStack_parseAndAnalyze" << std::endl;
-
-	return parse() && analyze();
+    std::cout << "进入到编译的解析和分析阶段...\n" << std::endl;
+    bool ret = parse() && analyze();
+    std::cout << "代码解析和分析阶段完毕，结果为：" << ret << std::endl;
+	return ret;
 }
 
 bool CompilerStack::isRequestedContract(ContractDefinition const& _contract) const
@@ -378,14 +414,14 @@ bool CompilerStack::isRequestedContract(ContractDefinition const& _contract) con
 
 bool CompilerStack::compile()
 {
-    std::cout << "zhtian compilerStack_compile" << std::endl;
+    std::cout << "编译开始...... \nCompilerStack::compile" << std::endl;
 
+    //如果编译状态不是成功，则进入编译阶段
 	if (m_stackState < AnalysisSuccessful)
 		if (!parseAndAnalyze())
 			return false;
-
-    std::cout << "compile : [[[[[[[[[[[[[[[[[[[begin to compile contract" << std::endl;
-
+    
+    std::cout << "进行编译生成阶段..." << std::endl;
 	// Only compile contracts individually which have been requested.
 	map<ContractDefinition const*, eth::Assembly const*> compiledContracts;
 	for (Source const* source: m_sourceOrder)
@@ -394,11 +430,13 @@ bool CompilerStack::compile()
 				if (isRequestedContract(*contract))
 					compileContract(*contract, compiledContracts);
 
+    std::cout << "编译生成阶段完毕，设置编译状态为 CompilationSuccessful" << std::endl;
 	m_stackState = CompilationSuccessful;
 
+    std::cout << "进入到链接阶段..." << std::endl;
 	this->link();
+    std::cout << "链接结束。" << std::endl;
 
-    std::cout << "compile : end to compile contract]]]]]]]]]]]]]]]]]]]" << std::endl;
 	return true;
 }
 
@@ -811,6 +849,7 @@ string CompilerStack::applyRemapping(string const& _path, string const& _context
 
 void CompilerStack::resolveImports()
 {
+    std::cout << "分析阶段之前的一个拓扑结构的排序，暂时没理解？？？" << std::endl;
 	solAssert(m_stackState == ParsingSuccessful, "");
 
 	// topological sorting (depth first search) of the import graph, cutting potential cycles
@@ -819,16 +858,21 @@ void CompilerStack::resolveImports()
 
 	function<void(Source const*)> toposort = [&](Source const* _source)
 	{
+        //如果就一个，那就没有排序的必要了。
 		if (sourcesSeen.count(_source))
 			return;
+
 		sourcesSeen.insert(_source);
+
 		for (ASTPointer<ASTNode> const& node: _source->ast->nodes())
 			if (ImportDirective const* import = dynamic_cast<ImportDirective*>(node.get()))
 			{
 				string const& path = import->annotation().absolutePath;
 				solAssert(!path.empty(), "");
 				solAssert(m_sources.count(path), "");
+
 				import->annotation().sourceUnit = m_sources[path].ast.get();
+
 				toposort(&m_sources[path]);
 			}
 		sourceOrder.push_back(_source);

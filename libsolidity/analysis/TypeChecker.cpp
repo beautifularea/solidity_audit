@@ -2245,6 +2245,7 @@ bool TypeChecker::visit(Identifier const& _identifier)
 
 void TypeChecker::endVisit(ElementaryTypeNameExpression const& _expr)
 {
+    std::cout << "TypeCheck endVist call fromElementaryTypeName(name)" << std::endl;
 	_expr.annotation().type = make_shared<TypeType>(Type::fromElementaryTypeName(_expr.typeName()));
 	_expr.annotation().isPure = true;
 }

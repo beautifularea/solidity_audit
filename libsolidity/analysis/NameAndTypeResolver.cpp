@@ -126,12 +126,15 @@ bool NameAndTypeResolver::performImports(SourceUnit& _sourceUnit, map<string, So
 
 bool NameAndTypeResolver::resolveNamesAndTypes(ASTNode& _node, bool _resolveInsideCode)
 {
+    std::cout << "NameAndTypeResolver::resolveNamesAndTypes" << std::endl;
 	try
 	{
 		return resolveNamesAndTypesInternal(_node, _resolveInsideCode);
 	}
 	catch (langutil::FatalError const&)
 	{
+        std::cout << "catch" << std::endl;
+
 		if (m_errorReporter.errors().empty())
 			throw; // Something is weird here, rather throw again.
 		return false;
@@ -140,6 +143,8 @@ bool NameAndTypeResolver::resolveNamesAndTypes(ASTNode& _node, bool _resolveInsi
 
 bool NameAndTypeResolver::updateDeclaration(Declaration const& _declaration)
 {
+    std::cout << "NameAndTypeResolver::updateDeclaration" << std::endl;
+
 	try
 	{
 		m_scopes[nullptr]->registerDeclaration(_declaration, nullptr, false, true);
@@ -269,24 +274,32 @@ bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _res
 {
 	if (ContractDefinition* contract = dynamic_cast<ContractDefinition*>(&_node))
 	{
+        std::cout << "resolveNamesAndTypes if" << std::endl;
+
 		bool success = true;
 		setScope(contract->scope());
+
 		solAssert(!!m_currentScope, "");
 
 		for (ASTPointer<InheritanceSpecifier> const& baseContract: contract->baseContracts())
+        {
+            std::cout << "internal first for" << std::endl;
+
 			if (!resolveNamesAndTypes(*baseContract, true))
 				success = false;
+
+            std::cout << "internal first for end" << std::endl;
+        }
 
 		setScope(contract);
 
 		if (success)
 		{
 			linearizeBaseContracts(*contract);
-			vector<ContractDefinition const*> properBases(
-				++contract->annotation().linearizedBaseContracts.begin(),
-				contract->annotation().linearizedBaseContracts.end()
-			);
+			vector<ContractDefinition const*> properBases(++contract->annotation().linearizedBaseContracts.begin(),
+                                                          contract->annotation().linearizedBaseContracts.end());
 
+            
 			for (ContractDefinition const* base: properBases)
 				importInheritedScope(*base);
 		}
@@ -294,10 +307,16 @@ bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _res
 		// these can contain code, only resolve parameters for now
 		for (ASTPointer<ASTNode> const& node: contract->subNodes())
 		{
+            std::cout << "internal third for" << std::endl;
+
 			setScope(contract);
 			if (!resolveNamesAndTypes(*node, false))
 				success = false;
+
+            std::cout << "internal third for end" << std::endl;
 		}
+
+        std::cout << "resolveNamesAndTypes first median" << std::endl;
 
 		if (!success)
 			return false;
@@ -307,13 +326,22 @@ bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _res
 
 		setScope(contract);
 
+        std::cout << "resolveNamesAndTypes second median" << std::endl;
+
 		// now resolve references inside the code
 		for (ASTPointer<ASTNode> const& node: contract->subNodes())
 		{
+            std::cout << "internal last for" << std::endl;
+
 			setScope(contract);
 			if (!resolveNamesAndTypes(*node, true))
 				success = false;
+
+            std::cout << "internal last for end" << std::endl;
 		}
+
+        std::cout << "resolveNamesAndTypes  third median : " << success << std::endl;
+
 		return success;
 	}
 	else

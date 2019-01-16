@@ -77,6 +77,8 @@ void SourceReferenceFormatter::printExceptionInformation(dev::Exception const& _
 
 void SourceReferenceFormatter::printExceptionInformation(SourceReferenceExtractor::Message const& _msg)
 {
+    std::cout << "printExceptionInformation" << std::endl;
+
 	printSourceName(_msg.primary);
 
 	m_stream << _msg.category << ": " << _msg.primary.message << endl;
