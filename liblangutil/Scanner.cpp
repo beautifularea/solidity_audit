@@ -182,7 +182,7 @@ void Scanner::reset(std::shared_ptr<CharStream> _source)
 
 void Scanner::reset()
 {
-    std::cout << "SCanner的初始化 : \n" << "0, m_source的初始化；\n" << "1, m_char的初始化；\n" << "3, 空格的处理；\n" << "4, 开始生成Token；\n" << std::endl;
+    std::cout << "\nSCanner的初始化 : \n" << "0, m_source的初始化；\n" << "1, m_char的初始化；\n" << "3, 空格的处理；\n" << "4, 开始生成Token；\n" << std::endl;
 
 	m_source->reset();
 	m_char = m_source->get();

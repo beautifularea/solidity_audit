@@ -942,7 +942,7 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
         std::cout << "开始编译合约代码..." << std::endl;
 		// Run optimiser and compile the contract.
 		compiler->compileContract(_contract, _compiledContracts, cborEncodedMetadata);
-        std::cout << "合约代码编译完毕。" << std::endl;
+        std::cout << "\n合约代码编译完毕。" << std::endl;
 	}
 	catch(eth::OptimizerException const&)
 	{
@@ -975,7 +975,7 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 
 CompilerStack::Contract const& CompilerStack::contract(string const& _contractName) const
 {
-    std::cout << "zhtian compilerStack_contract : " << std::endl;
+    std::cout << "查找合约名为： " << _contractName << "的bytecodes."  << std::endl;
 
 	solAssert(m_stackState >= AnalysisSuccessful, "");
 
@@ -983,7 +983,7 @@ CompilerStack::Contract const& CompilerStack::contract(string const& _contractNa
 	if (it != m_contracts.end())
 		return it->second;
 
-    std::cout << "zhtian it->second is nil" << std::endl;
+    std::cout << "没有查找到合约代码！！！" << std::endl;
 
 	// To provide a measure of backward-compatibility, if a contract is not located by its
 	// fully-qualified name, a lookup will be attempted purely on the contract's name to see

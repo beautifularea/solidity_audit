@@ -87,10 +87,15 @@ void Assembly::append(Assembly const& _a, int _deposit)
 
 AssemblyItem const& Assembly::append(AssemblyItem const& _i)
 {
-    std::cout << "append item" << std::endl;
+    std::string text = _i.toAssemblyText();
+    //新加入的item : " << text;
+    std::cout << text << "\t";
+
 	assertThrow(m_deposit >= 0, AssemblyException, "Stack underflow.");
+
 	m_deposit += _i.deposit();
 	m_items.emplace_back(_i);
+
 	if (m_items.back().location().isEmpty() && !m_currentSourceLocation.isEmpty())
 		m_items.back().setLocation(m_currentSourceLocation);
 	return back();

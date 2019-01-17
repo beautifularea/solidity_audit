@@ -72,17 +72,16 @@ void ContractCompiler::compileContract(
 		// This has to be the first code in the contract.
 		appendDelegatecallCheck();
 
-    std::cout << "初始化执行环境上下文" << std::endl;
 	initializeContext(_contract, _contracts);
 
 	// This generates the dispatch function for externally visible functions
 	// and adds the function to the compilation queue. Additionally internal functions,
 	// which are referenced directly or indirectly will be added.
-    std::cout << "根据合约内使用到的函数进行汇编构造" << std::endl;
+    std::cout << "\n根据合约内使用到的函数进行汇编构造" << std::endl;
 	appendFunctionSelector(_contract);
 
 	// This processes the above populated queue until it is empty.
-    std::cout << "链接不公开的函数(非public 声名)" << std::endl;
+    std::cout << "\n链接不公开的函数(非public 声名)" << std::endl;
 	appendMissingFunctions();
 }
 
@@ -91,6 +90,7 @@ size_t ContractCompiler::compileConstructor(
 	std::map<const ContractDefinition*, eth::Assembly const*> const& _contracts
 )
 {
+    std::cout << "\n这里调用了compileConstructor方法\n";
 	CompilerContext::LocationSetter locationSetter(m_context, _contract);
 	if (_contract.isLibrary())
 		return deployLibrary(_contract);
@@ -105,17 +105,27 @@ void ContractCompiler::initializeContext(ContractDefinition const& _contract,
                                          map<ContractDefinition const*, eth::Assembly const*> const& _compiledContracts
 )
 {
-    std::cout << "initializeContext---------" << std::endl;
+    std::cout << "\n--------------------\n初始化执行环境上下文" << std::endl;
 
 	m_context.setExperimentalFeatures(_contract.sourceUnit().annotation().experimentalFeatures);
 	m_context.setCompiledContracts(_compiledContracts);
 	m_context.setInheritanceHierarchy(_contract.annotation().linearizedBaseContracts);
 
+    std::cout << "\n什么时候开始append item?" << std::endl;
 	CompilerUtils(m_context).initialiseFreeMemoryPointer();
 
+    
+    //bytes copyByteCode = m_context.assembly().assemble().bytecode;
+    //std::cout << "新加入三个item : " << solidity::disassemble(copyByteCode) << std::endl;
+    //std::cout << " xxx " << solidity::disassemble(m_context.assembly().assemble().bytecode) << std::endl;;
+
+    std::cout << "\n什么时候开始append item??" << std::endl;
 	registerStateVariables(_contract);
 
+    std::cout << "\n什么时候开始append item???" << std::endl;
 	m_context.resetVisitedNodes(&_contract);
+
+    std::cout << "\n初始化执行上下文完毕。\n----------------------" << std::endl;
 }
 
 void ContractCompiler::appendCallValueCheck()
@@ -149,6 +159,7 @@ void ContractCompiler::appendInitAndConstructorCode(ContractDefinition const& _c
 
 size_t ContractCompiler::packIntoContractCreator(ContractDefinition const& _contract)
 {
+    std::cout << "\n这里是packIntoContractCreator方法，又加了很多items\n";
 	solAssert(!!m_runtimeCompiler, "");
 	solAssert(!_contract.isLibrary(), "Tried to use contract creator or library.");
 
@@ -173,7 +184,10 @@ size_t ContractCompiler::packIntoContractCreator(ContractDefinition const& _cont
 	m_context << u256(0) << Instruction::CODECOPY;
 	m_context << u256(0) << Instruction::RETURN;
 
-	return m_context.runtimeSub();
+    size_t n = m_context.runtimeSub();
+
+    std::cout << "\npackIntoContractCreator完毕。而runtimeSub个数是：" << n << "\n";
+	return n;
 }
 
 size_t ContractCompiler::deployLibrary(ContractDefinition const& _contract)

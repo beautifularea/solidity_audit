@@ -68,6 +68,8 @@ int main(int argc, char** argv)
         std::cout << "------------------------------------------input-----------------------------------" << std::endl;
 		success = cli.actOnInput();
         std::cout << "------------------------------------------input end-----------------------------------" << std::endl;
+
+        std::cout << 0x30 << std::endl;
 	}
 	catch (boost::exception const& _exception)
 	{
