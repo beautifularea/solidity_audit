@@ -595,12 +595,14 @@ LinkerObject const& Assembly::assemble() const
 		switch (i.type())
 		{
 		case Operation:
-            std::cout << "Operation" << std::endl;
 			ret.bytecode.push_back((uint8_t)i.instruction());
+            std::cout << "Operation : " << instructionInfo(i.instruction()).name << std::endl;
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		case PushString:
 		{
+            std::cout << "PushString : PUSH32" << std::endl;
+
 			ret.bytecode.push_back((uint8_t)Instruction::PUSH32);
 			unsigned ii = 0;
 
@@ -616,7 +618,6 @@ LinkerObject const& Assembly::assemble() const
 			while (ii++ < 32)
 				ret.bytecode.push_back(0);
 
-            std::cout << "end PUSHString" << std::endl;
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		}
@@ -665,6 +666,7 @@ LinkerObject const& Assembly::assemble() const
 		case PushSubSize:
 		{
             std::cout << "push sub ..." << std::endl;
+
 			auto s = m_subs.at(size_t(i.data()))->assemble().bytecode.size();
 			i.setPushedValue(u256(s));
 			uint8_t b = max<unsigned>(1, dev::bytesRequired(s));
@@ -679,23 +681,22 @@ LinkerObject const& Assembly::assemble() const
 		}
 		case PushProgramSize:
 		{
-            std::cout << "PushProgramSize" << std::endl;
-
 			ret.bytecode.push_back(dataRefPush);
 			sizeRef.push_back(ret.bytecode.size());
 			ret.bytecode.resize(ret.bytecode.size() + bytesPerDataRef);
+            std::cout << "PushProgramSize : " << (ret.bytecode.size())  << std::endl;
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		}
 		case PushLibraryAddress:
-            std::cout << "PushLibraryAddress" << std::endl;
+            std::cout << "PushLibraryAddress : PUSH20" << std::endl;
 			ret.bytecode.push_back(uint8_t(Instruction::PUSH20));
 			ret.linkReferences[ret.bytecode.size()] = m_libraries.at(i.data());
 			ret.bytecode.resize(ret.bytecode.size() + 20);
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		case PushDeployTimeAddress:
-            std::cout << "PushDeployTimeAddress" << std::endl;
+            std::cout << "PushDeployTimeAddress : PUSH20" << std::endl;
 			ret.bytecode.push_back(uint8_t(Instruction::PUSH20));
 			ret.bytecode.resize(ret.bytecode.size() + 20);
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
@@ -706,8 +707,7 @@ LinkerObject const& Assembly::assemble() const
 			assertThrow(ret.bytecode.size() < 0xffffffffL, AssemblyException, "Tag too large.");
 			assertThrow(m_tagPositionsInBytecode[size_t(i.data())] == size_t(-1), AssemblyException, "Duplicate tag position.");
 
-            std::cout << "Tag" << std::endl;
-
+            std::cout << "Tag : JUMPDEST" << std::endl;
 			m_tagPositionsInBytecode[size_t(i.data())] = ret.bytecode.size();
 			ret.bytecode.push_back((uint8_t)Instruction::JUMPDEST);
 
@@ -741,8 +741,6 @@ LinkerObject const& Assembly::assemble() const
         std::cout << "\n\n第三次对m_subs进行assemble操作..." << std::endl;
 
 		ret.append(m_subs[i]->assemble());
-
-        std::cout << "此时的ret bytecode : " << solidity::disassemble(ret.bytecode) << std::endl;
 
         std::cout << "第三次对m_subs的assemble操作完毕." << std::endl;
 	}

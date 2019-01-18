@@ -3048,7 +3048,7 @@ bool FunctionType::isPure() const
 
 TypePointers FunctionType::parseElementaryTypeVector(strings const& _types)
 {
-    std::cout << "parseElementaryTypeVector" << std::endl;
+    //std::cout << "parseElementaryTypeVector" << std::endl;
 
 	TypePointers pointers;
 	pointers.reserve(_types.size());
@@ -3057,8 +3057,6 @@ TypePointers FunctionType::parseElementaryTypeVector(strings const& _types)
     {   std::cout << "Type : " << type << "\n";
 		pointers.push_back(Type::fromElementaryTypeName(type));
     }
-
-    std::cout << "\n";
 
 	return pointers;
 }

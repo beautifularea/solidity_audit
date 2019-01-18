@@ -234,6 +234,7 @@ bool CompilerStack::analyze()
 
         std::cout << "进入到关键字检查阶段..." << std::endl;
 		m_globalContext = make_shared<GlobalContext>();
+        std::cout << "在构造globalContext的过程中，会生成一系列FunctionType." << std::endl;
 		NameAndTypeResolver resolver(m_globalContext->declarations(), m_scopes, m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			if (!resolver.registerDeclarations(*source->ast))
