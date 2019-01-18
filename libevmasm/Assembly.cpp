@@ -40,7 +40,7 @@ using namespace langutil;
 
 void Assembly::append(Assembly const& _a)
 {
-    std::cout << "--------------append(_a) ----------------" << std::endl;
+    std::cout << "追加Assembly..." << std::endl;
 
 	auto newDeposit = m_deposit + _a.deposit();
 	for (AssemblyItem i: _a.m_items)
@@ -64,19 +64,23 @@ void Assembly::append(Assembly const& _a)
 	m_usedTags += _a.m_usedTags;
 	// This does not transfer the names of named tags on purpose. The tags themselves are
 	// transferred, but their names are only available inside the assembly.
+
+    std::cout << "追加到m_data 个数 ：" << _a.m_data.size() << std::endl;
 	for (auto const& i: _a.m_data)
 		m_data.insert(i);
+
 	for (auto const& i: _a.m_strings)
 		m_strings.insert(i);
+
+    std::cout << "追加到m_subs 个数 ：" << _a.m_data.size() << std::endl;
 	m_subs += _a.m_subs;
+
 	for (auto const& lib: _a.m_libraries)
 		m_libraries.insert(lib);
 }
 
 void Assembly::append(Assembly const& _a, int _deposit)
 {
-    std::cout << "append(_a, dep)" << std::endl;
-
 	assertThrow(_deposit <= _a.m_deposit, InvalidDeposit, "");
 
 	append(_a);
@@ -88,8 +92,7 @@ void Assembly::append(Assembly const& _a, int _deposit)
 AssemblyItem const& Assembly::append(AssemblyItem const& _i)
 {
     std::string text = _i.toAssemblyText();
-    //新加入的item : " << text;
-    std::cout << text << "\t";
+    std::cout << "追加的item : " << text << "\t";
 
 	assertThrow(m_deposit >= 0, AssemblyException, "Stack underflow.");
 
@@ -110,6 +113,8 @@ void Assembly::injectStart(AssemblyItem const& _i)
 
 unsigned Assembly::bytesRequired(unsigned subTagSize) const
 {
+    std::cout << "计算subTagSize需要的bytes" << std::endl;
+
 	for (unsigned tagSize = subTagSize; true; ++tagSize)
 	{
 		unsigned ret = 1;
@@ -262,7 +267,6 @@ string Assembly::assemblyString(StringMap const& _sourceCodes) const
 	ostringstream tmp;
 	assemblyStream(tmp, "", _sourceCodes);
 
-    std::cout << "zhtian assembleString : " << tmp.str() << std::endl;
 	return tmp.str();
 }
 
@@ -529,11 +533,12 @@ map<u256, u256> Assembly::optimiseInternal(
 
 LinkerObject const& Assembly::assemble() const
 {
-    std::cout << "\n\nAssembly.assemble" << std::endl;
+    std::cout << "\n\n ---------------------开始assemble方法-----------------" << std::endl;
 
+    //判断bytecode是否为空，不为空则直接返回m_assembledObject。
 	if (!m_assembledObject.bytecode.empty())
     {
-        std::cout << "zhtian opcodes m_assembledObject NNNNNNNNNNNNot empty" << std::endl;
+        std::cout << "m_assembledObject的bytecode 不为空！" << std::endl;
 
 		return m_assembledObject;
     }
@@ -541,22 +546,21 @@ LinkerObject const& Assembly::assemble() const
 	size_t subTagSize = 1;
 	for (auto const& sub: m_subs)
 	{
-        std::cout << "zhtian opcodes sub" << std::endl;
+        std::cout << "\n第一次对m_subs进行assemble操作..." << std::endl;
         
 		sub->assemble();
-
-        std::cout << "zhtian opcodes sub ... end" << std::endl;
 
 		for (size_t tagPos: sub->m_tagPositionsInBytecode)
 			if (tagPos != size_t(-1) && tagPos > subTagSize)
 				subTagSize = tagPos;
+
+        std::cout << "第一次对m_subs操作完毕。\n" << std::endl;
 	}
 
-    std::cout << "m_assembledObject is empty , then fulfill it." << std::endl;
-
 	LinkerObject& ret = m_assembledObject;
+    std::cout << "初始化阶段，m_assembledObject的bytecode : " << solidity::disassemble(ret.bytecode) << std::endl;
     
-    std::cout << "subTagSize : " << subTagSize << std::endl;
+    std::cout << "获取subTagSize : " << subTagSize << std::endl;
 	size_t bytesRequiredForCode = bytesRequired(subTagSize);
     std::cout << "bytesRequiredForCode : " << bytesRequiredForCode << std::endl;
 
@@ -571,19 +575,16 @@ LinkerObject const& Assembly::assemble() const
 	unsigned bytesRequiredIncludingData = bytesRequiredForCode + 1 + m_auxiliaryData.size();
 	for (auto const& sub: m_subs)
     {
-        std::cout << "sub ..." << std::endl;
+        std::cout << "\n第二次对m_subs进行assemble操作..." << std::endl;
 		bytesRequiredIncludingData += sub->assemble().bytecode.size();
-        std::cout << "sub ... end" << std::endl;
+        std::cout << "bytesRequiredIncludingData = " << bytesRequiredIncludingData << std::endl;
+        std::cout << "第二次对m_subs操作完毕。" << std::endl;
     }
 
 	unsigned bytesPerDataRef = dev::bytesRequired(bytesRequiredIncludingData);
 	uint8_t dataRefPush = (uint8_t)Instruction::PUSH1 - 1 + bytesPerDataRef;
 
-    std::cout << "bytesRequiredIncludingData : " << bytesRequiredIncludingData << std::endl;
-
 	ret.bytecode.reserve(bytesRequiredIncludingData);
-
-    std::cout << "items : " << m_items.size() << std::endl;
 
 	for (AssemblyItem const& i: m_items)
 	{
@@ -600,7 +601,6 @@ LinkerObject const& Assembly::assemble() const
 			break;
 		case PushString:
 		{
-            std::cout << "PUSHString" << std::endl;
 			ret.bytecode.push_back((uint8_t)Instruction::PUSH32);
 			unsigned ii = 0;
 
@@ -610,7 +610,6 @@ LinkerObject const& Assembly::assemble() const
 					break;
 				else
                 {
-                    std::cout << "j : " << (uint8_t)j  << std::endl;
 					ret.bytecode.push_back((uint8_t)j);
                 }
             }
@@ -626,8 +625,7 @@ LinkerObject const& Assembly::assemble() const
             std::cout << "Push" << std::endl;
 
 			uint8_t b = max<unsigned>(1, dev::bytesRequired(i.data()));
-            std::cout << "b : " << (unsigned)b << std::endl;
-            std::cout << "PUsh : " << (uint8_t)Instruction::PUSH1 - 1 + b << " " << i.data() << std::endl;
+            std::cout << "指令操作码 : " << (uint8_t)Instruction::PUSH1 - 1 + b << "， 数据（十六进制）： " << i.data() << std::endl;
 			ret.bytecode.push_back((uint8_t)Instruction::PUSH1 - 1 + b);
 
 			ret.bytecode.resize(ret.bytecode.size() + b);
@@ -644,6 +642,7 @@ LinkerObject const& Assembly::assemble() const
 			ret.bytecode.push_back(tagPush);
 			tagRef[ret.bytecode.size()] = i.splitForeignPushTag();
 			ret.bytecode.resize(ret.bytecode.size() + bytesPerTag);
+
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		}
@@ -661,7 +660,6 @@ LinkerObject const& Assembly::assemble() const
 			subRef.insert(make_pair(size_t(i.data()), ret.bytecode.size()));
 			ret.bytecode.resize(ret.bytecode.size() + bytesPerDataRef);
 
-            std::cout << "dataRefpush : " << dataRefPush << std::endl;
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		case PushSubSize:
@@ -690,12 +688,14 @@ LinkerObject const& Assembly::assemble() const
 			break;
 		}
 		case PushLibraryAddress:
+            std::cout << "PushLibraryAddress" << std::endl;
 			ret.bytecode.push_back(uint8_t(Instruction::PUSH20));
 			ret.linkReferences[ret.bytecode.size()] = m_libraries.at(i.data());
 			ret.bytecode.resize(ret.bytecode.size() + 20);
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		case PushDeployTimeAddress:
+            std::cout << "PushDeployTimeAddress" << std::endl;
 			ret.bytecode.push_back(uint8_t(Instruction::PUSH20));
 			ret.bytecode.resize(ret.bytecode.size() + 20);
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
@@ -705,8 +705,12 @@ LinkerObject const& Assembly::assemble() const
 			assertThrow(i.splitForeignPushTag().first == size_t(-1), AssemblyException, "Foreign tag.");
 			assertThrow(ret.bytecode.size() < 0xffffffffL, AssemblyException, "Tag too large.");
 			assertThrow(m_tagPositionsInBytecode[size_t(i.data())] == size_t(-1), AssemblyException, "Duplicate tag position.");
+
+            std::cout << "Tag" << std::endl;
+
 			m_tagPositionsInBytecode[size_t(i.data())] = ret.bytecode.size();
 			ret.bytecode.push_back((uint8_t)Instruction::JUMPDEST);
+
             std::cout << "solidity::disassemble : " << solidity::disassemble(ret.bytecode) << "\n\n";
 			break;
 		default:
@@ -715,8 +719,13 @@ LinkerObject const& Assembly::assemble() const
 	}
 
 	if (!m_subs.empty() || !m_data.empty() || !m_auxiliaryData.empty())
+    {
+        std::cout << "Push Instruction::INVALID 到bytecode" << std::endl;
 		// Append an INVALID here to help tests find miscompilation.
 		ret.bytecode.push_back(uint8_t(Instruction::INVALID));
+
+        std::cout << "此时的ret bytecode : " << solidity::disassemble(ret.bytecode) << std::endl;
+    }
 
 	for (size_t i = 0; i < m_subs.size(); ++i)
 	{
@@ -729,36 +738,43 @@ LinkerObject const& Assembly::assemble() const
 			toBigEndian(ret.bytecode.size(), r);
 		}
 
-        std::cout << "m_sub append ..." << std::endl;
+        std::cout << "\n\n第三次对m_subs进行assemble操作..." << std::endl;
 
-    std::cout << "solidity::disassemble(ret.bytecode) : " << solidity::disassemble(ret.bytecode) << std::endl;
 		ret.append(m_subs[i]->assemble());
+
+        std::cout << "此时的ret bytecode : " << solidity::disassemble(ret.bytecode) << std::endl;
+
+        std::cout << "第三次对m_subs的assemble操作完毕." << std::endl;
 	}
 
+    std::cout << "开始操作tagRef..." << std::endl;
 	for (auto const& i: tagRef)
 	{
-        std::cout << "tagRef" << std::endl;
-
 		size_t subId;
 		size_t tagId;
+
 		tie(subId, tagId) = i.second;
+
 		assertThrow(subId == size_t(-1) || subId < m_subs.size(), AssemblyException, "Invalid sub id");
-		std::vector<size_t> const& tagPositions =
-			subId == size_t(-1) ?
-			m_tagPositionsInBytecode :
-			m_subs[subId]->m_tagPositionsInBytecode;
+
+		std::vector<size_t> const& tagPositions = subId == size_t(-1) ?	m_tagPositionsInBytecode : m_subs[subId]->m_tagPositionsInBytecode;
+
 		assertThrow(tagId < tagPositions.size(), AssemblyException, "Reference to non-existing tag.");
+
 		size_t pos = tagPositions[tagId];
+
 		assertThrow(pos != size_t(-1), AssemblyException, "Reference to tag without position.");
 		assertThrow(dev::bytesRequired(pos) <= bytesPerTag, AssemblyException, "Tag too large for reserved space.");
+
 		bytesRef r(ret.bytecode.data() + i.first, bytesPerTag);
 		toBigEndian(pos, r);
-
-        std::cout << "end tagRef" << std::endl;
 	}
-        std::cout << "--------m_data size  : ------" << m_data.size() << std::endl;
+    std::cout << "tagRef操作完毕。" << std::endl;
+
 	for (auto const& dataItem: m_data)
 	{
+        std::cout << "打印m_data如下：" << std::endl;
+        std::cout << "first : " << dataItem.first << "\t" << "second : " << solidity::disassemble(dataItem.second) << std::endl;
 
 		auto references = dataRef.equal_range(dataItem.first);
 		if (references.first == references.second)
@@ -770,21 +786,19 @@ LinkerObject const& Assembly::assemble() const
 			toBigEndian(ret.bytecode.size(), r);
 		}
 
-        std::cout << "solidity::disassemble(ret.bytecode) : " << solidity::disassemble(dataItem.second) << std::endl;
-
 		ret.bytecode += dataItem.second;
 	}
 
+    std::cout << "最后添加m_auxiliaryData到bytecode尾端。m_auxiliaryData : [" << solidity::disassemble(m_auxiliaryData) << "]" << std::endl;
 	ret.bytecode += m_auxiliaryData;
 
-    std::cout << "sizeRef : " << sizeRef.size() << std::endl;
 	for (unsigned pos: sizeRef)
 	{
 		bytesRef r(ret.bytecode.data() + pos, bytesPerDataRef);
 		toBigEndian(ret.bytecode.size(), r);
 	}
 
-    std::cout << "before return solidity::disassemble(ret.bytecode) : " << solidity::disassemble(ret.bytecode) << std::endl;
+    std::cout << "添加之后的bytecode是 : " << solidity::disassemble(ret.bytecode) << std::endl;
 
 	return ret;
 }

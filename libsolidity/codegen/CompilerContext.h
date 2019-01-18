@@ -176,7 +176,7 @@ public:
 	eth::AssemblyItem namedTag(std::string const& _name) { return m_asm->namedTag(_name); }
 	/// Adds a subroutine to the code (in the data section) and pushes its size (via a tag)
 	/// on the stack. @returns the pushsub assembly item.
-	eth::AssemblyItem addSubroutine(eth::AssemblyPointer const& _assembly) { return m_asm->appendSubroutine(_assembly); }
+	eth::AssemblyItem addSubroutine(eth::AssemblyPointer const& _assembly) { std::cout << "进入到了addSubroutine" << std::endl; return m_asm->appendSubroutine(_assembly); }
 	/// Pushes the size of the subroutine.
 	void pushSubroutineSize(size_t _subRoutine) { m_asm->pushSubroutineSize(_subRoutine); }
 	/// Pushes the offset of the subroutine.
@@ -244,7 +244,7 @@ public:
 		return m_asm->assemblyJSON(_sourceCodes);
 	}
 
-	eth::LinkerObject const& assembledObject() const { std::cout << "--------At context call assemble() ------\n"; return m_asm->assemble(); }
+	eth::LinkerObject const& assembledObject() const { return m_asm->assemble(); }
 	eth::LinkerObject const& assembledRuntimeObject(size_t _subIndex) const { return m_asm->sub(_subIndex).assemble(); }
 
 	/**

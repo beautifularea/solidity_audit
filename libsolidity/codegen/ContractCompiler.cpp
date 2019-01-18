@@ -90,15 +90,23 @@ size_t ContractCompiler::compileConstructor(
 	std::map<const ContractDefinition*, eth::Assembly const*> const& _contracts
 )
 {
-    std::cout << "\n这里调用了compileConstructor方法\n";
+    std::cout << "\n这里是compileConstructor方法\n";
+
+    size_t n;
 	CompilerContext::LocationSetter locationSetter(m_context, _contract);
 	if (_contract.isLibrary())
-		return deployLibrary(_contract);
+    {   
+        n = deployLibrary(_contract);
+    }
 	else
 	{
 		initializeContext(_contract, _contracts);
-		return packIntoContractCreator(_contract);
+
+        n = packIntoContractCreator(_contract);
 	}
+    
+    std::cout << "\ncompileConstructor方法完毕。" << std::endl;
+	return n; 
 }
 
 void ContractCompiler::initializeContext(ContractDefinition const& _contract,

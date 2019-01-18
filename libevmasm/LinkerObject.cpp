@@ -46,12 +46,18 @@ void LinkerObject::append(LinkerObject const& _other)
 
 void LinkerObject::link(map<string, h160> const& _libraryAddresses)
 {
+    std::cout << "LinkerObject对象，执行链接操作..." << std::endl;
+
 	std::map<size_t, std::string> remainingRefs;
+
 	for (auto const& linkRef: linkReferences)
+    {
 		if (h160 const* address = matchLibrary(linkRef.second, _libraryAddresses))
 			copy(address->data(), address->data() + 20, bytecode.begin() + linkRef.first);
 		else
 			remainingRefs.insert(linkRef);
+    }
+
 	linkReferences.swap(remainingRefs);
 }
 
@@ -80,16 +86,21 @@ LinkerObject::matchLibrary(
 	map<string, h160> const& _libraryAddresses
 )
 {
+    std::cout << "判断链接 name : " << _linkRefName << std::endl;
+
 	auto it = _libraryAddresses.find(_linkRefName);
 	if (it != _libraryAddresses.end())
 		return &it->second;
+
 	// If the user did not supply a fully qualified library name,
 	// try to match only the simple library name
 	size_t colon = _linkRefName.find(':');
 	if (colon == string::npos)
 		return nullptr;
+
 	it = _libraryAddresses.find(_linkRefName.substr(colon + 1));
 	if (it != _libraryAddresses.end())
 		return &it->second;
+
 	return nullptr;
 }

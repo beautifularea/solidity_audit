@@ -438,35 +438,46 @@ bool CompilerStack::compile()
 
     std::cout << "进入到链接阶段..." << std::endl;
 	this->link();
-    std::cout << "链接结束。" << std::endl;
 
 	return true;
 }
 
 void CompilerStack::link()
 {
-    std::cout << "CompilerStack link" << std::endl;
+    std::cout << "开始链接..." << std::endl;
 
 	solAssert(m_stackState >= CompilationSuccessful, "");
+
 	for (auto& contract: m_contracts)
 	{
-        std::cout << "m_libraries size : " << m_libraries.size() << std::endl;
+        std::cout << "需要链接的个数 : " << m_libraries.size() << std::endl;
+
         for(auto& lib : m_libraries)
         {
-            std::cout << "lib string : " << lib.first << std::endl;
+            std::cout << "lib 名称 : " << lib.first << std::endl;
         }
+
 		contract.second.object.link(m_libraries);
 		contract.second.runtimeObject.link(m_libraries);
 	}
+
+    std::cout << "链接结束." << std::endl;
 }
 
 vector<string> CompilerStack::contractNames() const
 {
+    std::cout << "获取合约列表　：　" << std::endl;
+
 	if (m_stackState < AnalysisSuccessful)
 		BOOST_THROW_EXCEPTION(CompilerError() << errinfo_comment("Parsing was not successful."));
+
 	vector<string> contractNames;
 	for (auto const& contract: m_contracts)
+    {
+        std::cout << "Contract Name : " << contract.first << std::endl;
 		contractNames.push_back(contract.first);
+    }
+
 	return contractNames;
 }
 
@@ -951,7 +962,10 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 	try
 	{
 		// Assemble deployment (incl. runtime)  object.
+        std::cout << "获取Deployment object (includes the runtime sub-object)." << std::endl;
 		compiledContract.object = compiler->assembledObject();
+        std::cout << "获取完毕，付给compiledContract（struct Contract类型）的object属性" << std::endl;
+
         std::cout << "获取合约的bytecode : " << solidity::disassemble(compiledContract.object.bytecode) << std::endl;
 	}
 	catch(eth::AssemblyException const&)
@@ -962,7 +976,10 @@ void CompilerStack::compileContract(ContractDefinition const& _contract,
 	try
 	{
 		// Assemble runtime object.
+        std::cout << "开始获取runtime object..." << std::endl;
 		compiledContract.runtimeObject = compiler->runtimeObject();
+        std::cout << "获取runtime object完毕。" << std::endl;
+
         std::cout << "获取合约的runtime code : " << solidity::disassemble(compiledContract.runtimeObject.bytecode) << std::endl;
 	}
 	catch(eth::AssemblyException const&)

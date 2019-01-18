@@ -51,7 +51,7 @@ public:
 	AssemblyItem namedTag(std::string const& _name);
 	AssemblyItem newData(bytes const& _data) { h256 h(dev::keccak256(asString(_data))); m_data[h] = _data; return AssemblyItem(PushData, h); }
 	bytes const& data(h256 const& _i) const { return m_data.at(_i); }
-	AssemblyItem newSub(AssemblyPointer const& _sub) { m_subs.push_back(_sub); return AssemblyItem(PushSub, m_subs.size() - 1); }
+	AssemblyItem newSub(AssemblyPointer const& _sub) { std::cout << "new一个sub，添加到m_subs" << std::endl; m_subs.push_back(_sub); return AssemblyItem(PushSub, m_subs.size() - 1); }
 	Assembly const& sub(size_t _sub) const { return *m_subs.at(_sub); }
 	Assembly& sub(size_t _sub) { return *m_subs.at(_sub); }
 	AssemblyItem newPushSubSize(u256 const& _subId) { return AssemblyItem(PushSubSize, _subId); }
@@ -75,7 +75,7 @@ public:
 
 	/// Adds a subroutine to the code (in the data section) and pushes its size (via a tag)
 	/// on the stack. @returns the pushsub assembly item.
-	AssemblyItem appendSubroutine(AssemblyPointer const& _assembly) { auto sub = newSub(_assembly); append(newPushSubSize(size_t(sub.data()))); return sub; }
+	AssemblyItem appendSubroutine(AssemblyPointer const& _assembly) { std::cout << "进入到了appendSubroutine" << std::endl; auto sub = newSub(_assembly); append(newPushSubSize(size_t(sub.data()))); return sub; }
 	void pushSubroutineSize(size_t _subRoutine) { append(newPushSubSize(_subRoutine)); }
 	/// Pushes the offset of the subroutine.
 	void pushSubroutineOffset(size_t _subRoutine) { append(AssemblyItem(PushSub, _subRoutine)); }
