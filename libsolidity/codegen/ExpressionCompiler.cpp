@@ -1330,7 +1330,10 @@ bool ExpressionCompiler::visit(MemberAccess const& _memberAccess)
 		else if (member == "number")
 			m_context << Instruction::NUMBER;
 		else if (member == "gaslimit")
+        {
+            std::cout << "添加GASLIMIT关键字。" << std::endl;
 			m_context << Instruction::GASLIMIT;
+        }
 		else if (member == "sender")
 			m_context << Instruction::CALLER;
 		else if (member == "value")

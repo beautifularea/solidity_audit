@@ -152,10 +152,10 @@ void ContractCompiler::appendInitAndConstructorCode(ContractDefinition const& _c
 	m_baseArguments = &_contract.annotation().baseConstructorArguments;
 
 	// Initialization of state variables in base-to-derived order.
-	for (ContractDefinition const* contract: boost::adaptors::reverse(
-		_contract.annotation().linearizedBaseContracts
-	))
+	for (ContractDefinition const* contract: boost::adaptors::reverse(_contract.annotation().linearizedBaseContracts))
+    {
 		initializeStateVariables(*contract);
+    }
 
 	if (FunctionDefinition const* constructor = _contract.constructor())
 		appendConstructor(*constructor);

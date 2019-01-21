@@ -184,6 +184,13 @@ ASTPointer<PragmaDirective> Parser::parsePragmaDirective()
 		);
 	}
 
+    std::cout << "Pragma literals : ";
+    for(auto& i : literals)
+    {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+
 	return nodeFactory.createNode<PragmaDirective>(tokens, literals);
 }
 
@@ -289,11 +296,11 @@ ASTPointer<ContractDefinition> Parser::parseContractDefinition()
 	if (m_scanner->currentCommentLiteral() != "")
     {
 		docString = make_shared<ASTString>(m_scanner->currentCommentLiteral());
-        std::cout << "doxy doc : " << *docString << std::endl;
+        std::cout << "这个是doxygen风格的注释 ： " << *docString << std::endl;
     }
     else
     {
-        std::cout << "no doxy doc comments" << std::endl;
+        //std::cout << "no doxy doc comments" << std::endl;
     }
 
 	ContractDefinition::ContractKind contractKind = parseContractKind();
@@ -558,10 +565,12 @@ ASTPointer<ASTNode> Parser::parseFunctionDefinitionOrFunctionTypeStateVariable()
 	if (m_scanner->currentCommentLiteral() != "")
     {
 		docstring = make_shared<ASTString>(m_scanner->currentCommentLiteral());
-        std::cout << "doxy doc /// : " << *docstring << std::endl;
+        std::cout << "这里doxygen风格的注释 ： " << *docstring << std::endl;
     }
     else
-        std::cout << "no comments" << std::endl;
+    {
+        //std::cout << "no comments" << std::endl;
+    }
 
     std::cout << "开始解析function头..." << std::endl;
 	FunctionHeaderParserResult header = parseFunctionHeader(false, true);
@@ -974,6 +983,7 @@ ASTPointer<FunctionTypeName> Parser::parseFunctionType()
 {
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
+
 	FunctionHeaderParserResult header = parseFunctionHeader(true, false);
 	solAssert(!header.isConstructor, "Tried to parse type as constructor.");
 	return nodeFactory.createNode<FunctionTypeName>(
@@ -1068,7 +1078,10 @@ ASTPointer<Statement> Parser::parseStatement()
 
 	if (m_scanner->currentCommentLiteral() != "")
 		docString = make_shared<ASTString>(m_scanner->currentCommentLiteral());
+
 	ASTPointer<Statement> statement;
+    Token token = m_scanner->currentToken();
+    std::cout << "当前的token : " << TokenTraits::toString(token) << std::endl;
 	switch (m_scanner->currentToken())
 	{
 	case Token::If:
@@ -1152,11 +1165,23 @@ ASTPointer<IfStatement> Parser::parseIfStatement(ASTPointer<ASTString> const& _d
 {
 	RecursionGuard recursionGuard(*this);
 	ASTNodeFactory nodeFactory(*this);
+
+    //if(expression) 
+    //包含四个部分：
+    //1.if 关键字
 	expectToken(Token::If);
-	expectToken(Token::LParen);
+	
+    //2. 左边括号
+    expectToken(Token::LParen);
+
+    //3. 表达式
 	ASTPointer<Expression> condition = parseExpression();
+
+    //4. 右边括号
 	expectToken(Token::RParen);
+
 	ASTPointer<Statement> trueBody = parseStatement();
+
 	ASTPointer<Statement> falseBody;
 	if (m_scanner->currentToken() == Token::Else)
 	{

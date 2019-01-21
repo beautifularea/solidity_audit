@@ -152,6 +152,8 @@ static Token keywordByName(string const& _name)
 
 tuple<Token, unsigned int, unsigned int> fromIdentifierOrKeyword(string const& _literal)
 {
+    std::cout << "fromIdentifierOrKeyword : " << _literal << std::endl;
+
 	auto positionM = find_if(_literal.begin(), _literal.end(), ::isdigit);
 	if (positionM != _literal.end())
 	{

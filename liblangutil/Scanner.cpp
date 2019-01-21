@@ -459,6 +459,9 @@ Token Scanner::scanSlash()
 
 void Scanner::scanToken()
 {
+    std::cout << "进入到scanToken方法." << std::endl;
+
+    //清空m_nextToken/m_nextSkippedComment.
 	m_nextToken.error = ScannerError::NoError;
 	m_nextToken.literal.clear();
 	m_nextToken.extendedTokenInfo = make_tuple(0, 0);
@@ -473,6 +476,8 @@ void Scanner::scanToken()
 	{
 		// Remember the position of the next token
 		m_nextToken.location.start = sourcePos();
+
+        std::cout << "------scanToken for loop : " << m_char << std::endl;
 		switch (m_char)
 		{
 		case '"':
@@ -632,6 +637,8 @@ void Scanner::scanToken()
 		default:
 			if (isIdentifierStart(m_char))
 			{
+                std::cout << "scanToken default" << std::endl;
+
 				tie(token, m, n) = scanIdentifierOrKeyword();
 
 				// Special case for hexadecimal literals
@@ -660,8 +667,10 @@ void Scanner::scanToken()
 		}
 		// Continue scanning for tokens as long as we're just skipping
 		// whitespace.
-	}
-	while (token == Token::Whitespace);
+	}while (token == Token::Whitespace);
+
+    std::cout << "----end scanToken----- " << std::endl;
+
 	m_nextToken.location.end = sourcePos();
 	m_nextToken.token = token;
 	m_nextToken.extendedTokenInfo = make_tuple(m, n);
@@ -893,12 +902,17 @@ Token Scanner::scanNumber(char _charSeen)
 tuple<Token, unsigned, unsigned> Scanner::scanIdentifierOrKeyword()
 {
 	solAssert(isIdentifierStart(m_char), "");
+
 	LiteralScope literal(this, LITERAL_TYPE_STRING);
+
 	addLiteralCharAndAdvance();
+
 	// Scan the rest of the identifier characters.
 	while (isIdentifierPart(m_char)) //get full literal
 		addLiteralCharAndAdvance();
+
 	literal.complete();
+
 	return TokenTraits::fromIdentifierOrKeyword(m_nextToken.literal);
 }
 
