@@ -236,6 +236,7 @@ bool CompilerStack::analyze()
 		m_globalContext = make_shared<GlobalContext>();
         std::cout << "在构造globalContext的过程中，会生成一系列FunctionType." << std::endl;
 		NameAndTypeResolver resolver(m_globalContext->declarations(), m_scopes, m_errorReporter);
+        std::cout << "-----------call registerDeclareations-----------" << std::endl;
 		for (Source const* source: m_sourceOrder)
 			if (!resolver.registerDeclarations(*source->ast))
 				return false;
@@ -1204,6 +1205,8 @@ Json::Value gasToJson(GasEstimator::GasConsumption const& _gas)
 
 Json::Value CompilerStack::gasEstimates(string const& _contractName) const
 {
+    std::cout << "这个方法计算gas大约消耗." << std::endl;
+
 	if (m_stackState != CompilationSuccessful)
 		BOOST_THROW_EXCEPTION(CompilerError() << errinfo_comment("Compilation was not successful."));
 

@@ -759,14 +759,17 @@ bool ContractCompiler::visit(InlineAssembly const& _inlineAssembly)
 }
 
 bool ContractCompiler::visit(IfStatement const& _ifStatement)
-{
+{   
+    std::cout << "ContractCompiler::vist ---- IfStatement" << std::endl;
 	StackHeightChecker checker(m_context);
 	CompilerContext::LocationSetter locationSetter(m_context, _ifStatement);
 	compileExpression(_ifStatement.condition());
 	m_context << Instruction::ISZERO;
 	eth::AssemblyItem falseTag = m_context.appendConditionalJump();
 	eth::AssemblyItem endTag = falseTag;
+
 	_ifStatement.trueStatement().accept(*this);
+
 	if (_ifStatement.falseStatement())
 	{
 		endTag = m_context.appendJumpToNew();
@@ -888,6 +891,8 @@ bool ContractCompiler::visit(Break const& _breakStatement)
 
 bool ContractCompiler::visit(Return const& _return)
 {
+    std::cout << "ContractCompiler::vist --- RETURN" << std::endl;
+
 	CompilerContext::LocationSetter locationSetter(m_context, _return);
 	if (Expression const* expression = _return.expression())
 	{

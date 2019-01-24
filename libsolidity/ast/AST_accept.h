@@ -47,12 +47,14 @@ void SourceUnit::accept(ASTConstVisitor& _visitor) const
 
 void PragmaDirective::accept(ASTVisitor& _visitor)
 {
+    std::cout << "PragmaDirective::accept" << std::endl;
 	_visitor.visit(*this);
 	_visitor.endVisit(*this);
 }
 
 void PragmaDirective::accept(ASTConstVisitor& _visitor) const
 {
+    std::cout << "PragmaDirective::accept const" << std::endl;
 	_visitor.visit(*this);
 	_visitor.endVisit(*this);
 }

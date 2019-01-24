@@ -58,6 +58,7 @@ bool NameAndTypeResolver::registerDeclarations(SourceUnit& _sourceUnit, ASTNode 
 	// The helper registers all declarations in m_scopes as a side-effect of its construction.
 	try
 	{
+        std::cout << "Call DeclarationRegistrationHelper" << std::endl;
 		DeclarationRegistrationHelper registrar(m_scopes, _sourceUnit, m_errorReporter, _currentScope);
 	}
 	catch (langutil::FatalError const&)

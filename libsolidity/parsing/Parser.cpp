@@ -472,10 +472,13 @@ Parser::FunctionHeaderParserResult Parser::parseFunctionHeader(bool _forceEmptyN
 	else if (_forceEmptyName || m_scanner->currentToken() == Token::LParen)
 		result.name = make_shared<ASTString>();
 	else if (m_scanner->currentToken() == Token::Constructor)
+    {
+        std::cout << "构造函数定义错误。。。。。。。。。。" << std::endl;
 		fatalParserError(string(
 			"This function is named \"constructor\" but is not the constructor of the contract. "
 			"If you intend this to be a constructor, use \"constructor(...) { ... }\" without the \"function\" keyword to define it."
 		));
+    }
 	else
     {
 		result.name = expectIdentifierToken();
