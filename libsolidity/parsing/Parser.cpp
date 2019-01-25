@@ -426,6 +426,8 @@ Declaration::Visibility Parser::parseVisibilitySpecifier()
 
 StateMutability Parser::parseStateMutability()
 {
+    std::cout << "解析state 的可修改性." << std::endl;
+
 	StateMutability stateMutability(StateMutability::NonPayable);
 	Token token = m_scanner->currentToken();
 	switch(token)
