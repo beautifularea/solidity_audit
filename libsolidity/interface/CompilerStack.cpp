@@ -697,12 +697,18 @@ Json::Value const& CompilerStack::natspecDev(Contract const& _contract) const
 
 Json::Value CompilerStack::methodIdentifiers(string const& _contractName) const
 {
+    std::cout << "进入到methodIdentifiers方法。" << std::endl;
+
 	if (m_stackState < AnalysisSuccessful)
 		BOOST_THROW_EXCEPTION(CompilerError() << errinfo_comment("Analysis was not successful."));
 
 	Json::Value methodIdentifiers(Json::objectValue);
+
 	for (auto const& it: contractDefinition(_contractName).interfaceFunctions())
+    {
 		methodIdentifiers[it.second->externalSignature()] = it.first.hex();
+    }
+
 	return methodIdentifiers;
 }
 

@@ -140,13 +140,16 @@ void ContractCompiler::appendCallValueCheck()
 {
 	// Throw if function is not payable but call contained ether.
 	m_context << Instruction::CALLVALUE;
+
 	// TODO: error message?
 	m_context.appendConditionalRevert();
 }
 
 void ContractCompiler::appendInitAndConstructorCode(ContractDefinition const& _contract)
 {
+    
 	solAssert(!_contract.isLibrary(), "Tried to initialize library.");
+
 	CompilerContext::LocationSetter locationSetter(m_context, _contract);
 
 	m_baseArguments = &_contract.annotation().baseConstructorArguments;
@@ -158,7 +161,10 @@ void ContractCompiler::appendInitAndConstructorCode(ContractDefinition const& _c
     }
 
 	if (FunctionDefinition const* constructor = _contract.constructor())
+    {
+        std::cout << "此合约中找到了构造函数的定义." << std::endl;
 		appendConstructor(*constructor);
+    }
 	else if (auto c = m_context.nextConstructor(_contract))
 		appendBaseConstructor(*c);
 	else
@@ -257,6 +263,8 @@ void ContractCompiler::appendConstructor(FunctionDefinition const& _constructor)
 	// copy constructor arguments from code to memory and then to stack, they are supplied after the actual program
 	if (!_constructor.parameters().empty())
 	{
+        std::cout << "合约构造函数的参数列表不为空." << std::endl;
+
 		unsigned argumentSize = 0;
 		for (ASTPointer<VariableDeclaration> const& var: _constructor.parameters())
 			if (var->annotation().type->isDynamicallySized())
@@ -287,6 +295,11 @@ void ContractCompiler::appendConstructor(FunctionDefinition const& _constructor)
 		// stack: <memptr>
 		CompilerUtils(m_context).abiDecode(FunctionType(_constructor).parameterTypes(), true);
 	}
+    else
+    {
+        std::cout << "合约构造函数的参数列表为空。" << std::endl;
+    }
+    
 	_constructor.accept(*this);
 }
 
@@ -539,6 +552,8 @@ bool ContractCompiler::visit(VariableDeclaration const& _variableDeclaration)
 
 bool ContractCompiler::visit(FunctionDefinition const& _function)
 {
+    std::cout << "开始visit FunctionDefinition" << std::endl;
+
 	CompilerContext::LocationSetter locationSetter(m_context, _function);
 
 	m_context.startFunction(_function);
@@ -550,6 +565,7 @@ bool ContractCompiler::visit(FunctionDefinition const& _function)
 	if (!_function.isConstructor())
 		// adding 1 for return address.
 		m_context.adjustStackOffset(parametersSize + 1);
+
 	for (ASTPointer<VariableDeclaration const> const& variable: _function.parameters())
 	{
 		m_context.addVariable(*variable, parametersSize);
@@ -560,17 +576,25 @@ bool ContractCompiler::visit(FunctionDefinition const& _function)
 		appendStackVariableInitialisation(*variable);
 
 	if (_function.isConstructor())
+    {
 		if (auto c = m_context.nextConstructor(dynamic_cast<ContractDefinition const&>(*_function.scope())))
+        {
 			appendBaseConstructor(*c);
+        }
+    }
 
 	solAssert(m_returnTags.empty(), "");
+
 	m_breakTags.clear();
 	m_continueTags.clear();
+
 	m_currentFunction = &_function;
+
 	m_modifierDepth = -1;
 	m_scopeStackHeight.clear();
 
 	appendModifierOrFunctionCode();
+
 	solAssert(m_returnTags.empty(), "");
 
 	// Now we need to re-shuffle the stack. For this we keep a record of the stack layout
@@ -612,6 +636,8 @@ bool ContractCompiler::visit(FunctionDefinition const& _function)
 	for (ASTPointer<VariableDeclaration const> const& variable: _function.parameters() + _function.returnParameters())
 		m_context.removeVariable(*variable);
 
+    std::cout << "stack offset ： " << -(int)c_returnValuesSize;
+
 	m_context.adjustStackOffset(-(int)c_returnValuesSize);
 
 	/// The constructor and the fallback function doesn't to jump out.
@@ -621,6 +647,8 @@ bool ContractCompiler::visit(FunctionDefinition const& _function)
 		if (!_function.isFallback())
 			m_context.appendJump(eth::AssemblyItem::JumpType::OutOfFunction);
 	}
+
+    std::cout << "visit FunctionDefinition 结束。" << std::endl;
 
 	return false;
 }

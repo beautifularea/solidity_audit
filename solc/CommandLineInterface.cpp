@@ -289,6 +289,9 @@ void CommandLineInterface::handleBytecode(string const& _contract)
 
 void CommandLineInterface::handleSignatureHashes(string const& _contract)
 {
+    sout() << "打印当前合约public函数的hash值(--hashs)" << endl;
+    sout() << "当前合约为： " << _contract << endl;
+
 	if (!m_args.count(g_argSignatureHashes))
 		return;
 

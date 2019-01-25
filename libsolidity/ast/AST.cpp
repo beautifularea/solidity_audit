@@ -110,6 +110,8 @@ TypePointer ImportDirective::type() const
 
 map<FixedHash<4>, FunctionTypePointer> ContractDefinition::interfaceFunctions() const
 {
+    std::cout << "开始获取合约定义中的接口方法。" << std::endl;
+
 	auto exportedFunctionList = interfaceFunctionList();
 
 	map<FixedHash<4>, FunctionTypePointer> exportedFunctions;
@@ -120,6 +122,8 @@ map<FixedHash<4>, FunctionTypePointer> ContractDefinition::interfaceFunctions() 
 		exportedFunctionList.size() == exportedFunctions.size(),
 		"Hash collision at Function Definition Hash calculation"
 	);
+    
+    std::cout << "获取完毕，返回。" << std::endl;
 
 	return exportedFunctions;
 }
@@ -178,15 +182,25 @@ vector<pair<FixedHash<4>, FunctionTypePointer>> const& ContractDefinition::inter
 	{
 		set<string> signaturesSeen;
 		m_interfaceFunctionList.reset(new vector<pair<FixedHash<4>, FunctionTypePointer>>());
+
 		for (ContractDefinition const* contract: annotation().linearizedBaseContracts)
 		{
 			vector<FunctionTypePointer> functions;
 			for (FunctionDefinition const* f: contract->definedFunctions())
 				if (f->isPartOfExternalInterface())
 					functions.push_back(make_shared<FunctionType>(*f, false));
+
+            std::cout << "开始生成state variable方法。也就是getter方法。" << std::endl;
 			for (VariableDeclaration const* v: contract->stateVariables())
+            {
 				if (v->isPartOfExternalInterface())
+                {
+                    std::cout << "调用isPartOfExternalInterface,对声明进行了判断，因此符合getter的条件。" << std::endl;
 					functions.push_back(make_shared<FunctionType>(*v));
+                }
+            }
+            std::cout << "getter方法生成完毕，生成个数：" << contract->stateVariables().size() << std::endl;
+
 			for (FunctionTypePointer const& fun: functions)
 			{
 				if (!fun->interfaceFunctionType())
@@ -202,6 +216,11 @@ vector<pair<FixedHash<4>, FunctionTypePointer>> const& ContractDefinition::inter
 			}
 		}
 	}
+    else
+    {
+        std::cout << "m_interfaceFunctionList 不为空。" << std::endl;
+    }
+
 	return *m_interfaceFunctionList;
 }
 

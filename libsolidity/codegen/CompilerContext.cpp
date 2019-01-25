@@ -296,17 +296,20 @@ CompilerContext& CompilerContext::appendRevert()
 CompilerContext& CompilerContext::appendConditionalRevert(bool _forwardReturnData)
 {
 	if (_forwardReturnData && m_evmVersion.supportsReturndata())
-		appendInlineAssembly(R"({
-			if condition {
-				returndatacopy(0, 0, returndatasize())
-				revert(0, returndatasize())
-			}
-		})", {"condition"});
+    {
+        std::cout << "添加有返回值的Assembly." << std::endl;
+
+		appendInlineAssembly(R"({ if condition { returndatacopy(0, 0, returndatasize())	revert(0, returndatasize())}})", {"condition"});
+    }
 	else
-		appendInlineAssembly(R"({
-			if condition { revert(0, 0) }
-		})", {"condition"});
+    {
+        std::cout << "添加没有返回值的Assembly." << std::endl;
+
+		appendInlineAssembly(R"({ if condition { revert(0, 0) }})", {"condition"});
+    }
+
 	*this << Instruction::POP;
+
 	return *this;
 }
 
@@ -326,6 +329,7 @@ void CompilerContext::appendInlineAssembly(
 )
 {
 	int startStackHeight = stackHeight();
+    std::cout << "startStackHeight : " << startStackHeight << std::endl;
 
 	yul::ExternalIdentifierAccess identifierAccess;
 	identifierAccess.resolve = [&](
