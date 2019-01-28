@@ -538,7 +538,7 @@ LinkerObject const& Assembly::assemble() const
     //判断bytecode是否为空，不为空则直接返回m_assembledObject。
 	if (!m_assembledObject.bytecode.empty())
     {
-        std::cout << "m_assembledObject的bytecode 不为空！" << std::endl;
+        std::cout << "m_assembledObject的bytecode 不为空！ 直接返回。\n" << std::endl;
 
 		return m_assembledObject;
     }
@@ -546,7 +546,7 @@ LinkerObject const& Assembly::assemble() const
 	size_t subTagSize = 1;
 	for (auto const& sub: m_subs)
 	{
-        std::cout << "\n第一次对m_subs进行assemble操作..." << std::endl;
+        std::cout << "\n第一次对m_subs进行assemble操作... and m_subs.size() = " << m_subs.size()  << std::endl;
         
 		sub->assemble();
 
@@ -575,7 +575,7 @@ LinkerObject const& Assembly::assemble() const
 	unsigned bytesRequiredIncludingData = bytesRequiredForCode + 1 + m_auxiliaryData.size();
 	for (auto const& sub: m_subs)
     {
-        std::cout << "\n第二次对m_subs进行assemble操作..." << std::endl;
+        std::cout << "\n第二次对m_subs进行assemble操作... and m_subs.size() = " << m_subs.size()  << std::endl;
 		bytesRequiredIncludingData += sub->assemble().bytecode.size();
         std::cout << "bytesRequiredIncludingData = " << bytesRequiredIncludingData << std::endl;
         std::cout << "第二次对m_subs操作完毕。" << std::endl;
@@ -738,7 +738,7 @@ LinkerObject const& Assembly::assemble() const
 			toBigEndian(ret.bytecode.size(), r);
 		}
 
-        std::cout << "\n\n第三次对m_subs进行assemble操作..." << std::endl;
+        std::cout << "\n\n第三次对m_subs进行assemble操作... and m_subs.size() : " << m_subs.size() << std::endl;
 
 		ret.append(m_subs[i]->assemble());
 
