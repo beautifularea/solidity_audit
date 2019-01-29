@@ -361,7 +361,11 @@ ASTPointer<ContractDefinition> Parser::parseContractDefinition()
 			expectToken(Token::Semicolon);
 		}
 		else if (currentTokenValue == Token::Modifier)
+        {
+            std::cout << "开始解析modifier" << std::endl;
 			subNodes.push_back(parseModifierDefinition());
+            std::cout << "解析modifier完毕。" << std::endl;
+        }
 		else if (currentTokenValue == Token::Event)
 			subNodes.push_back(parseEventDefinition());
 		else if (currentTokenValue == Token::Using)
@@ -805,6 +809,7 @@ ASTPointer<VariableDeclaration> Parser::parseVariableDeclaration(
 
 ASTPointer<ModifierDefinition> Parser::parseModifierDefinition()
 {
+
 	RecursionGuard recursionGuard(*this);
 	ScopeGuard resetModifierFlag([this]() { m_insideModifier = false; });
 	m_insideModifier = true;
@@ -828,6 +833,7 @@ ASTPointer<ModifierDefinition> Parser::parseModifierDefinition()
 		parameters = createEmptyParameterList();
 	ASTPointer<Block> block = parseBlock();
 	nodeFactory.setEndPositionFromNode(block);
+
 	return nodeFactory.createNode<ModifierDefinition>(name, docstring, parameters, block);
 }
 

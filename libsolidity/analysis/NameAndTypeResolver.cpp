@@ -281,12 +281,11 @@ void NameAndTypeResolver::setScope(ASTNode const* _node)
 	m_currentScope = m_scopes[_node].get();
 }
 
+//这个方法暂时没有看明白???
 bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _resolveInsideCode)
 {
 	if (ContractDefinition* contract = dynamic_cast<ContractDefinition*>(&_node))
 	{
-        std::cout << "resolveNamesAndTypes if" << std::endl;
-
 		bool success = true;
 		setScope(contract->scope());
 
@@ -294,18 +293,18 @@ bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _res
 
 		for (ASTPointer<InheritanceSpecifier> const& baseContract: contract->baseContracts())
         {
-            std::cout << "internal first for" << std::endl;
+            std::cout << "处理继承关系。" << std::endl;
 
 			if (!resolveNamesAndTypes(*baseContract, true))
 				success = false;
-
-            std::cout << "internal first for end" << std::endl;
         }
 
 		setScope(contract);
 
 		if (success)
 		{
+            std::cout << "依然是继承？" << std::endl;
+
 			linearizeBaseContracts(*contract);
 			vector<ContractDefinition const*> properBases(++contract->annotation().linearizedBaseContracts.begin(),
                                                           contract->annotation().linearizedBaseContracts.end());
@@ -318,13 +317,12 @@ bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _res
 		// these can contain code, only resolve parameters for now
 		for (ASTPointer<ASTNode> const& node: contract->subNodes())
 		{
-            std::cout << "internal third for" << std::endl;
-
+            std::cout << "－－－－－－－－１－－－－－－－－－" << std::endl;
 			setScope(contract);
 			if (!resolveNamesAndTypes(*node, false))
 				success = false;
 
-            std::cout << "internal third for end" << std::endl;
+            std::cout << "－－－－－－－－ｅｎｄ 1-----------------" << std::endl;
 		}
 
         std::cout << "resolveNamesAndTypes first median" << std::endl;

@@ -139,17 +139,22 @@ bool ViewPureChecker::check()
 
 bool ViewPureChecker::visit(FunctionDefinition const& _funDef)
 {
+    std::cout << "ViewPureChecker::visit, 参数 ： FunctionDefinition" << std::endl;
+
 	solAssert(!m_currentFunction, "");
+
 	m_currentFunction = &_funDef;
 	m_bestMutabilityAndLocation = {StateMutability::Pure, _funDef.location()};
+
 	return true;
 }
 
 void ViewPureChecker::endVisit(FunctionDefinition const& _funDef)
 {
-    std::cout << "viewPureChecker.endVisit" << std::endl;
+    std::cout << "viewPureChecker.endVisit, 参数 : FunctionDefinition" << std::endl;
 
 	solAssert(m_currentFunction == &_funDef, "");
+
 	if (
 		m_bestMutabilityAndLocation.mutability < _funDef.stateMutability() &&
 		_funDef.stateMutability() != StateMutability::Payable &&
@@ -166,6 +171,8 @@ void ViewPureChecker::endVisit(FunctionDefinition const& _funDef)
 
 bool ViewPureChecker::visit(ModifierDefinition const& _modifier)
 {
+    std::cout << "ViewPureChecker::visit,　参数：ModifierDefinition" << std::endl;
+
 	solAssert(m_currentFunction == nullptr, "");
 	m_bestMutabilityAndLocation = {StateMutability::Pure, _modifier.location()};
 	return true;
@@ -173,16 +180,22 @@ bool ViewPureChecker::visit(ModifierDefinition const& _modifier)
 
 void ViewPureChecker::endVisit(ModifierDefinition const& _modifierDef)
 {
+    std::cout << "ViewPureChecker::endVisit, 参数：ModifierDefinition" << std::endl;
+
 	solAssert(m_currentFunction == nullptr, "");
 	m_inferredMutability[&_modifierDef] = std::move(m_bestMutabilityAndLocation);
 }
 
 void ViewPureChecker::endVisit(Identifier const& _identifier)
 {
+    std::cout << "ViewPureChecker::endVisit, 参数：Identifier.name = " << _identifier.name() << std::endl;
+
 	Declaration const* declaration = _identifier.annotation().referencedDeclaration;
 	solAssert(declaration, "");
 
 	StateMutability mutability = StateMutability::Pure;
+    //StateMutability 类型参数。
+    //libsolidity/ast/ASTEnums.h:34:enum class StateMutability { Pure, View, NonPayable, Payable };
 
 	bool writes = _identifier.annotation().lValueRequested;
 	if (VariableDeclaration const* varDecl = dynamic_cast<VariableDeclaration const*>(declaration))
@@ -209,11 +222,14 @@ void ViewPureChecker::endVisit(Identifier const& _identifier)
 		}
 	}
 
+    std::cout << "调用reportMutability, mutability " << std::endl;
 	reportMutability(mutability, _identifier.location());
 }
 
 void ViewPureChecker::endVisit(InlineAssembly const& _inlineAssembly)
 {
+    std::cout << "ViewPureChecker::endVisit, 参数：InlineAssembly" << std::endl;
+
 	AssemblyViewPureChecker{
 		[=](StateMutability _mutability, SourceLocation const& _location) { reportMutability(_mutability, _location); }
 	}(_inlineAssembly.operations());
@@ -227,21 +243,19 @@ void ViewPureChecker::reportMutability(
 {
 	if (_mutability > m_bestMutabilityAndLocation.mutability)
 		m_bestMutabilityAndLocation = MutabilityAndLocation{_mutability, _location};
+
 	if (!m_currentFunction || _mutability <= m_currentFunction->stateMutability())
 		return;
 
 	// Check for payable here, because any occurrence of `msg.value`
 	// will set mutability to payable.
-	if (_mutability == StateMutability::View || (
-		_mutability == StateMutability::Payable &&
-		m_currentFunction->stateMutability() == StateMutability::Pure
-	))
+	if (_mutability == StateMutability::View || (_mutability == StateMutability::Payable &&	m_currentFunction->stateMutability() == StateMutability::Pure))
 	{
-		m_errorReporter.typeError(
-			_location,
-			"Function declared as pure, but this expression (potentially) reads from the "
-			"environment or state and thus requires \"view\"."
-		);
+        std::cout << "检查pure 或者　payable, 发出错误提示。" << std::endl;
+        
+		m_errorReporter.typeError(_location,
+                                  "Function declared as pure, but this expression (potentially) reads from the "
+                                  "environment or state and thus requires \"view\".");
 		m_errors = true;
 	}
 	else if (_mutability == StateMutability::NonPayable)
@@ -289,6 +303,8 @@ void ViewPureChecker::reportMutability(
 
 void ViewPureChecker::endVisit(FunctionCall const& _functionCall)
 {
+    std::cout << "ViewPureChecker::endVisit, 参数：FunctionCall" << std::endl;
+
 	if (_functionCall.annotation().kind != FunctionCallKind::FunctionCall)
 		return;
 
@@ -301,6 +317,8 @@ void ViewPureChecker::endVisit(FunctionCall const& _functionCall)
 
 bool ViewPureChecker::visit(MemberAccess const& _memberAccess)
 {
+    std::cout << "ViewPureChecker::visit, 参数： MemberAccess" << std::endl;
+
 	// Catch the special case of `this.f.selector` which is a pure expression.
 	ASTString const& member = _memberAccess.memberName();
 	if (
@@ -317,6 +335,8 @@ bool ViewPureChecker::visit(MemberAccess const& _memberAccess)
 
 void ViewPureChecker::endVisit(MemberAccess const& _memberAccess)
 {
+    std::cout << "ViewPureChecker::endVisit, 参数： MemberAccess" << std::endl;
+
 	StateMutability mutability = StateMutability::Pure;
 	bool writes = _memberAccess.annotation().lValueRequested;
 
@@ -374,6 +394,7 @@ void ViewPureChecker::endVisit(MemberAccess const& _memberAccess)
 
 void ViewPureChecker::endVisit(IndexAccess const& _indexAccess)
 {
+    std::cout << "ViewPureChecker::endVisit, 参数 : IndexAccess" << std::endl;
 	if (!_indexAccess.indexExpression())
 		solAssert(_indexAccess.annotation().type->category() == Type::Category::TypeType, "");
 	else
@@ -386,7 +407,10 @@ void ViewPureChecker::endVisit(IndexAccess const& _indexAccess)
 
 void ViewPureChecker::endVisit(ModifierInvocation const& _modifier)
 {
+    std::cout << "ViewPureChecker::endVisit, 参数： ModifierInvocation" << std::endl;
+
 	solAssert(_modifier.name(), "");
+
 	if (ModifierDefinition const* mod = dynamic_cast<decltype(mod)>(_modifier.name()->annotation().referencedDeclaration))
 	{
 		solAssert(m_inferredMutability.count(mod), "");
