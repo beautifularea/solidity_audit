@@ -148,6 +148,7 @@ static_assert(std::is_nothrow_move_constructible<MemberList>::value, "MemberList
 /**
  * Abstract base class that forms the root of the type hierarchy.
  */
+ //solidity支持的所有类型定义，比如bool, address,array...etc
 class Type: private boost::noncopyable, public std::enable_shared_from_this<Type>
 {
 public:

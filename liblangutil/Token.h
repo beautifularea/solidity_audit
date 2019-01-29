@@ -68,6 +68,7 @@ namespace langutil
 
 #define IGNORE_TOKEN(name, string, precedence)
 
+//TOKEN_LIST包含了solidity当前版本所有的关键字
 #define TOKEN_LIST(T, K)												\
 	/* End of source indicator. */										\
 	T(EOS, "EOS", 0)													\

@@ -199,7 +199,7 @@ public:
 
 	/// Append elements to the current instruction list and adjust @a m_stackOffset.
 	CompilerContext& operator<<(eth::AssemblyItem const& _item) { std::cout << "context 添加AssemblyItem!" << std::endl;  m_asm->append(_item); return *this; }
-	CompilerContext& operator<<(Instruction _instruction)       { std::cout << "context 添加 Instruction！" << std::endl; m_asm->append(_instruction); return *this; }
+	CompilerContext& operator<<(Instruction _instruction)       { std::cout << "context 添加 Instruction : " << instructionInfo(_instruction).name << std::endl; m_asm->append(_instruction); return *this; }
 	CompilerContext& operator<<(u256 const& _value)             { std::cout << "context 添加u256!" << std::endl;          m_asm->append(_value); return *this; }
 	CompilerContext& operator<<(bytes const& _data)             { std::cout << "context 添加bytes!" << std::endl;         m_asm->append(_data); return *this; }
 

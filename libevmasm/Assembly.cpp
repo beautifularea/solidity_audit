@@ -92,7 +92,7 @@ void Assembly::append(Assembly const& _a, int _deposit)
 AssemblyItem const& Assembly::append(AssemblyItem const& _i)
 {
     std::string text = _i.toAssemblyText();
-    std::cout << "追加的item : " << text << "\t";
+    std::cout << "\n追加的item : " << text << "\n";
 
 	assertThrow(m_deposit >= 0, AssemblyException, "Stack underflow.");
 

@@ -394,6 +394,8 @@ bool ExpressionCompiler::visit(UnaryOperation const& _unaryOperation)
 
 bool ExpressionCompiler::visit(BinaryOperation const& _binaryOperation)
 {
+    std::cout << "ExpressionCompiler的vist方法，处理BinaryOperation。" << std::endl;
+
 	CompilerContext::LocationSetter locationSetter(m_context, _binaryOperation);
 	Expression const& leftExpression = _binaryOperation.leftExpression();
 	Expression const& rightExpression = _binaryOperation.rightExpression();
@@ -448,6 +450,8 @@ bool ExpressionCompiler::visit(BinaryOperation const& _binaryOperation)
 
 bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 {
+    std::cout << "ExpressionCompiler的vist方法，处理FunctionCall。" << std::endl;
+
 	CompilerContext::LocationSetter locationSetter(m_context, _functionCall);
 	if (_functionCall.annotation().kind == FunctionCallKind::TypeConversion)
 	{
