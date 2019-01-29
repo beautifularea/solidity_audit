@@ -158,6 +158,7 @@ bool NameAndTypeResolver::updateDeclaration(Declaration const& _declaration)
 
 	try
 	{
+        //nullptr 当ｋｅｙ???
 		m_scopes[nullptr]->registerDeclaration(_declaration, nullptr, false, true);
 		solAssert(_declaration.scope() == nullptr, "Updated declaration outside global scope.");
 	}
@@ -303,8 +304,6 @@ bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _res
 
 		if (success)
 		{
-            std::cout << "依然是继承？" << std::endl;
-
 			linearizeBaseContracts(*contract);
 			vector<ContractDefinition const*> properBases(++contract->annotation().linearizedBaseContracts.begin(),
                                                           contract->annotation().linearizedBaseContracts.end());
@@ -325,7 +324,7 @@ bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _res
             std::cout << "－－－－－－－－ｅｎｄ 1-----------------" << std::endl;
 		}
 
-        std::cout << "resolveNamesAndTypes first median" << std::endl;
+        std::cout << "success : " << std::boolalpha << success << std::endl;
 
 		if (!success)
 			return false;
@@ -422,10 +421,13 @@ void NameAndTypeResolver::linearizeBaseContracts(ContractDefinition& _contract)
 			m_errorReporter.fatalTypeError(baseName.location(), "Definition of base has to precede definition of derived contract");
 		input.push_front(list<ContractDefinition const*>(basesBases.begin(), basesBases.end()));
 	}
+
 	input.back().push_front(&_contract);
+
 	vector<ContractDefinition const*> result = cThreeMerge(input);
 	if (result.empty())
 		m_errorReporter.fatalTypeError(_contract.location(), "Linearization of inheritance graph impossible");
+
 	_contract.annotation().linearizedBaseContracts = result;
 	_contract.annotation().contractDependencies.insert(result.begin() + 1, result.end());
 }

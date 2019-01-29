@@ -259,23 +259,34 @@ bool CompilerStack::analyze()
 		// the special variables "this" and "super" must be set appropriately.
 		for (Source const* source: m_sourceOrder)
 			for (ASTPointer<ASTNode> const& node: source->ast->nodes())
+            {
+                std::cout << "获取node" << std::endl;
+                if(PragmaDirective* pragma = dynamic_cast<PragmaDirective*>(node.get()))
+                {
+                    //消除警告　unused
+                    (void)pragma;
+                    std::cout << "这个node是pragma定义." << std::endl;
+                }
+
 				if (ContractDefinition* contract = dynamic_cast<ContractDefinition*>(node.get()))
-				{
+                {
+                    std::cout << "这个node是合约的定义" << std::endl;
+
 					m_globalContext->setCurrentContract(*contract);
 
+                    //给合约添加magic关键字[this]
 					if (!resolver.updateDeclaration(*m_globalContext->currentThis())) return false;
 
+                    //给合约添加magic关键字[super]
 					if (!resolver.updateDeclaration(*m_globalContext->currentSuper())) return false;
 
-                    std::cout << "in double for" << std::endl;
+                    //开始resolve
 					if (!resolver.resolveNamesAndTypes(*contract)) 
                     {   
-                        std::cout << "return false" << std::endl;
+                        std::cout << "解析失败." << std::endl;
 
                         return false;
                     }
-                    std::cout << "after in double for" << std::endl;
-
 					// Note that we now reference contracts by their fully qualified names, and
 					// thus contracts can only conflict if declared in the same source file.  This
 					// already causes a double-declaration error elsewhere, so we do not report
@@ -286,6 +297,7 @@ bool CompilerStack::analyze()
 						m_contracts[contract->fullyQualifiedName()].contract = contract;
                     }
 				}
+            }
         std::cout << "........................................" << std::endl;
 
 		// Next, we check inheritance, overrides, function collisions and other things at
