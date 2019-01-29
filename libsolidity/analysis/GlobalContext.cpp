@@ -33,7 +33,7 @@ namespace dev
 {
 namespace solidity
 {
-
+//定义了一些magic变量，比如：msgs、this,super,tx...etc
 GlobalContext::GlobalContext(): m_magicVariables(vector<shared_ptr<MagicVariableDeclaration const>>{
 	make_shared<MagicVariableDeclaration>("abi", make_shared<MagicType>(MagicType::Kind::ABI)),
 	make_shared<MagicVariableDeclaration>("addmod", make_shared<FunctionType>(strings{"uint256", "uint256", "uint256"}, strings{"uint256"}, FunctionType::Kind::AddMod, false, StateMutability::Pure)),
