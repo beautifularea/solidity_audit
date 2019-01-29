@@ -208,31 +208,34 @@ bool CompilerStack::parse()
 
 bool CompilerStack::analyze()
 {
-    std::cout << "进入到编译阶段之analyze" << std::endl;
+    std::cout << "分析阶段开始。。。" << std::endl;
 
-    std::cout << "如果parse结果不为 ParsingSuccessful ，直接返回ｆａｌｓｅ" << std::endl;
 	if (m_stackState != ParsingSuccessful)
+    {
+        std::cout << "解析失败！" << std::endl;
 		return false;
+    }
+    std::cout << "解析结果为 ParsingSuccessful." << std::endl;
 
 	resolveImports();
 
 	bool noErrors = true;
 	try {
-		std::cout << "进入到语法检查阶段..." << std::endl;
+		std::cout << "第一步：语法检查..." << std::endl;
         SyntaxChecker syntaxChecker(m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			if (!syntaxChecker.checkSyntax(*source->ast))
 				noErrors = false;
-        std::cout << "语法检查完毕，结果是：" << noErrors << std::endl;
+        std::cout << "第一步语法检查完毕，结果是：" << noErrors << std::endl;
 
-        std::cout << "进入到ｄｏｃ分析阶段..." << std::endl;
+        std::cout << "第二步：ｄｏｃ分析..." << std::endl;
 		DocStringAnalyser docStringAnalyser(m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			if (!docStringAnalyser.analyseDocStrings(*source->ast))
 				noErrors = false;
-        std::cout << "ｄｏｃ分析阶段完毕，结果是：" << noErrors << std::endl;
+        std::cout << "第二步：ｄｏｃ分析阶段完毕，结果是：" << noErrors << std::endl;
 
-        std::cout << "进入到关键字检查阶段..." << std::endl;
+        std::cout << "第三步：关键字检查..." << std::endl;
 		m_globalContext = make_shared<GlobalContext>();
         std::cout << "在构造globalContext的过程中，会生成了上面一系列FunctionType." << std::endl;
 		NameAndTypeResolver resolver(m_globalContext->declarations(), m_scopes, m_errorReporter);
@@ -240,7 +243,7 @@ bool CompilerStack::analyze()
 		for (Source const* source: m_sourceOrder)
 			if (!resolver.registerDeclarations(*source->ast))
 				return false;
-        std::cout << "关键字检查完毕。" << std::endl;
+        std::cout << "第三步关键字检查完毕。" << std::endl;
 
 		map<string, SourceUnit const*> sourceUnitsByName;
 		for (auto& source: m_sources)
@@ -289,14 +292,14 @@ bool CompilerStack::analyze()
 		// contract or function level.
 		// This also calculates whether a contract is abstract, which is needed by the
 		// type checker.
-        std::cout << "进入到合约Ｌｅｖｅｌ的检查..." << std::endl;
+        std::cout << "第五步：合约Ｌｅｖｅｌ的检查（方法重载，抽象等）..." << std::endl;
 		ContractLevelChecker contractLevelChecker(m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			for (ASTPointer<ASTNode> const& node: source->ast->nodes())
 				if (ContractDefinition* contract = dynamic_cast<ContractDefinition*>(node.get()))
 					if (!contractLevelChecker.check(*contract))
 						noErrors = false;
-        std::cout << "合约Ｌｅｖｅｌ检查完毕，结果是：" << noErrors << std::endl;
+        std::cout << "第五步：合约Ｌｅｖｅｌ检查完毕，结果是：" << noErrors << std::endl;
 
 		// New we run full type checks that go down to the expression level. This
 		// cannot be done earlier, because we need cross-contract types and information
@@ -305,7 +308,7 @@ bool CompilerStack::analyze()
 		//
 		// Note: this does not resolve overloaded functions. In order to do that, types of arguments are needed,
 		// which is only done one step later.
-        std::cout << "进入到合约Type的检查..." << std::endl;
+        std::cout << "第六步：合约Type的检查..." << std::endl;
 		TypeChecker typeChecker(m_evmVersion, m_errorReporter);
 		for (Source const* source: m_sourceOrder)
 			for (ASTPointer<ASTNode> const& node: source->ast->nodes())
@@ -313,23 +316,22 @@ bool CompilerStack::analyze()
 					if (!typeChecker.checkTypeRequirements(*contract))
 						noErrors = false;
 
-        std::cout << "合约Type检查完毕，结果是 : " << noErrors << std::endl;
-
+        std::cout << "第六步：合约Type检查完毕，结果是 : " << noErrors << std::endl;
+    
+        std::cout << "第七步：合约PostType检查..." << std::endl;
 		if (noErrors)
 		{
-            std::cout << "PostTypeChecker..." << std::endl;
 			// Checks that can only be done when all types of all AST nodes are known.
 			PostTypeChecker postTypeChecker(m_errorReporter);
 			for (Source const* source: m_sourceOrder)
 				if (!postTypeChecker.check(*source->ast))
 					noErrors = false;
-
-            std::cout << "PostTypeChecker 完毕，结果是：" << noErrors << std::endl;
 		}
+        std::cout << "第七步：PostTypeChecker 完毕，结果是：" << noErrors << std::endl;
 
+        std::cout << "第八步：合约流程控制语句（if/while/for)检查..." << std::endl;
 		if (noErrors)
 		{
-            std::cout << "进入到合约controlFlowAnalyzer阶段..." << std::endl;
 
 			// Control flow graph generator and analyzer. It can check for issues such as
 			// variable is used before it is assigned to.
@@ -345,22 +347,21 @@ bool CompilerStack::analyze()
 					if (!controlFlowAnalyzer.analyze(*source->ast))
 						noErrors = false;
 			}
-
-            std::cout << "合约controlFlowAnalyzer完毕，结果是：" << noErrors << std::endl;
 		}
+        std::cout << "第八步：合约流程控制检查完毕，结果是：" << noErrors << std::endl;
 
+        std::cout << "第九步：合约静态分析阶段..." << std::endl;
 		if (noErrors)
 		{
-            std::cout << "进入到合约静态分析阶段..." << std::endl;
 			// Checks for common mistakes. Only generates warnings.
 			StaticAnalyzer staticAnalyzer(m_errorReporter);
 			for (Source const* source: m_sourceOrder)
 				if (!staticAnalyzer.analyze(*source->ast))
 					noErrors = false;
-
-            std::cout << "静态分析阶段完毕，结果是：" << noErrors << std::endl;
 		}
+        std::cout << "第九步：静态分析阶段完毕，结果是：" << noErrors << std::endl;
 
+        std::cout << "第十步：合约ViewPure检查阶段..." << std::endl;
 		if (noErrors)
 		{
 			// Check for state mutability in every function.
@@ -368,22 +369,20 @@ bool CompilerStack::analyze()
 			for (Source const* source: m_sourceOrder)
 				ast.push_back(source->ast);
 
-            std::cout << "进入到合约ViewPure检查阶段..." << std::endl;
 			if (!ViewPureChecker(ast, m_errorReporter).check())
 				noErrors = false;
-
-            std::cout << "合约ViewPure检查完毕，结果是：" << noErrors << std::endl;
 		}
+        std::cout << "第十步：合约ViewPure检查完毕，结果是：" << noErrors << std::endl;
 
+        std::cout << "第十一步：进入到SMT checker阶段..." << std::endl;
 		if (noErrors)
 		{
-            std::cout << "进入到SMT checker阶段..." << std::endl;
 			SMTChecker smtChecker(m_errorReporter, m_smtlib2Responses);
 			for (Source const* source: m_sourceOrder)
 				smtChecker.analyze(*source->ast, source->scanner);
 			m_unhandledSMTLib2Queries += smtChecker.unhandledQueries();
-            std::cout << "SMT checker阶段完毕。" << std::endl;
 		}
+        std::cout << "第十一步： SMT checker阶段完毕。" << std::endl;
 	}
 	catch(FatalError const&)
 	{
@@ -403,9 +402,9 @@ bool CompilerStack::analyze()
 
 bool CompilerStack::parseAndAnalyze()
 {
-    std::cout << "进入到编译的解析和分析阶段...\n" << std::endl;
+    std::cout << "\n\n--------------------------------------------------第二阶段：解析及分析阶段------------------------------------------------\n" << std::endl;
     bool ret = parse() && analyze();
-    std::cout << "代码解析和分析阶段完毕，结果为：" << ret << std::endl;
+    std::cout << "\n----------------------------------------------------第二阶段：解析及分析阶段完毕，结果为： " << ret << "----------------------------------" << std::endl;
 	return ret;
 }
 
@@ -419,14 +418,15 @@ bool CompilerStack::isRequestedContract(ContractDefinition const& _contract) con
 
 bool CompilerStack::compile()
 {
-    std::cout << "编译开始...... \nCompilerStack::compile" << std::endl;
+    std::cout << "编译开始...... \n" << std::endl;
 
     //如果编译状态不是成功，则进入编译阶段
+
 	if (m_stackState < AnalysisSuccessful)
 		if (!parseAndAnalyze())
 			return false;
     
-    std::cout << "进行编译生成阶段..." << std::endl;
+    std::cout << "\n\n-------------------------------------------------第三阶段：进行编译生成----------------------------------------------\n" << std::endl;
 	// Only compile contracts individually which have been requested.
 	map<ContractDefinition const*, eth::Assembly const*> compiledContracts;
 	for (Source const* source: m_sourceOrder)
@@ -435,11 +435,12 @@ bool CompilerStack::compile()
 				if (isRequestedContract(*contract))
 					compileContract(*contract, compiledContracts);
 
-    std::cout << "编译生成阶段完毕，设置编译状态为 CompilationSuccessful" << std::endl;
+    std::cout << "\n\n-----------------------------------------第三阶段：编译生成阶段完毕，设置编译状态为 CompilationSuccessful------------------------------\n" << std::endl;
 	m_stackState = CompilationSuccessful;
 
-    std::cout << "进入到链接阶段..." << std::endl;
+    std::cout << "\n\n--------------------------------------------------第四阶段：链接--------------------------------------------------------------\n" << std::endl;
 	this->link();
+    std::cout << "\n\n--------------------------------------------------第四阶段：链接完毕。--------------------------------------------------------------\n" << std::endl;
 
 	return true;
 }

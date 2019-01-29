@@ -34,11 +34,20 @@ using namespace dev::solidity;
 
 bool ContractLevelChecker::check(ContractDefinition const& _contract)
 {
+    //检查重载的问题
 	checkDuplicateFunctions(_contract);
+
+    //Event
 	checkDuplicateEvents(_contract);
+
+    //非法重写
 	checkIllegalOverrides(_contract);
+
+    //抽象函数
 	checkAbstractFunctions(_contract);
 	checkBaseConstructorArguments(_contract);
+
+    //构造函数
 	checkConstructor(_contract);
 	checkFallbackFunction(_contract);
 	checkExternalTypeClashes(_contract);
@@ -53,17 +62,21 @@ void ContractLevelChecker::checkDuplicateFunctions(ContractDefinition const& _co
 	/// Checks that two functions with the same name defined in this contract have different
 	/// argument types and that there is at most one constructor.
 	map<string, vector<FunctionDefinition const*>> functions;
+
 	FunctionDefinition const* constructor = nullptr;
 	FunctionDefinition const* fallback = nullptr;
+
 	for (FunctionDefinition const* function: _contract.definedFunctions())
 		if (function->isConstructor())
 		{
+            //只能有一个构造函数！！！
 			if (constructor)
 				m_errorReporter.declarationError(
 					function->location(),
 					SecondarySourceLocation().append("Another declaration is here:", constructor->location()),
 					"More than one constructor defined."
 				);
+
 			constructor = function;
 		}
 		else if (function->isFallback())
@@ -361,8 +374,11 @@ void ContractLevelChecker::checkConstructor(ContractDefinition const& _contract)
 	if (!constructor)
 		return;
 
+    //构造函数没有返回值
 	if (!constructor->returnParameters().empty())
 		m_errorReporter.typeError(constructor->returnParameterList()->location(), "Non-empty \"returns\" directive for constructor.");
+
+    //.Payable or non-payable ,没有其他状态
 	if (constructor->stateMutability() != StateMutability::NonPayable && constructor->stateMutability() != StateMutability::Payable)
 		m_errorReporter.typeError(
 			constructor->location(),
@@ -370,6 +386,8 @@ void ContractLevelChecker::checkConstructor(ContractDefinition const& _contract)
 			stateMutabilityToString(constructor->stateMutability()) +
 			"\"."
 		);
+
+    //可见类型，public / internal ，没有其他类型
 	if (constructor->visibility() != FunctionDefinition::Visibility::Public && constructor->visibility() != FunctionDefinition::Visibility::Internal)
 		m_errorReporter.typeError(constructor->location(), "Constructor must be public or internal.");
 }

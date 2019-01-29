@@ -33,8 +33,11 @@ namespace solidity
 
 void SourceUnit::accept(ASTVisitor& _visitor)
 {
+    std::cout << "SourceUnit::accept" << std::endl;
+
 	if (_visitor.visit(*this))
 		listAccept(m_nodes, _visitor);
+
 	_visitor.endVisit(*this);
 }
 
@@ -48,6 +51,7 @@ void SourceUnit::accept(ASTConstVisitor& _visitor) const
 void PragmaDirective::accept(ASTVisitor& _visitor)
 {
     std::cout << "PragmaDirective::accept" << std::endl;
+
 	_visitor.visit(*this);
 	_visitor.endVisit(*this);
 }
@@ -73,6 +77,8 @@ void ImportDirective::accept(ASTConstVisitor& _visitor) const
 
 void ContractDefinition::accept(ASTVisitor& _visitor)
 {
+    std::cout << "ContractDefinition::accept" << std::endl;
+
 	if (_visitor.visit(*this))
 	{
 		listAccept(m_baseContracts, _visitor);
@@ -219,10 +225,13 @@ void FunctionDefinition::accept(ASTConstVisitor& _visitor) const
 
 void VariableDeclaration::accept(ASTVisitor& _visitor)
 {
+    std::cout << "VariableDeclaration::accept" << std::endl;
+
 	if (_visitor.visit(*this))
 	{
 		if (m_typeName)
 			m_typeName->accept(_visitor);
+
 		if (m_value)
 			m_value->accept(_visitor);
 	}

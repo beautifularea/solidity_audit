@@ -528,8 +528,14 @@ TypeResult AddressType::unaryOperatorResult(Token _operator) const
 
 TypeResult AddressType::binaryOperatorResult(Token _operator, TypePointer const& _other) const
 {
+    //Address 只支持： <=， <， ==， !=， >= 和 > 六种类型。
 	if (!TokenTraits::isCompareOp(_operator))
+    {
+        std::cout << "address类型不支持二元操作符 : " << TokenTraits::friendlyName(_operator) << std::endl;
 		return TypeResult{"Arithmetic operations on addresses are not supported. Convert to integer first before using them."};
+    }
+
+    std::cout << "address类型支持二元操作符 : " << TokenTraits::friendlyName(_operator) << std::endl;
 
 	return Type::commonType(shared_from_this(), _other);
 }
@@ -544,6 +550,8 @@ bool AddressType::operator==(Type const& _other) const
 
 MemberList::MemberMap AddressType::nativeMembers(ContractDefinition const*) const
 {
+    std::cout << "在这个方法内，定义了address类型的属性及方法。" << std::endl;
+
 	MemberList::MemberMap members = {
 		{"balance", make_shared<IntegerType>(256)},
 		{"call", make_shared<FunctionType>(strings{"bytes memory"}, strings{"bool", "bytes memory"}, FunctionType::Kind::BareCall, false, StateMutability::Payable)},
@@ -551,8 +559,10 @@ MemberList::MemberMap AddressType::nativeMembers(ContractDefinition const*) cons
 		{"delegatecall", make_shared<FunctionType>(strings{"bytes memory"}, strings{"bool", "bytes memory"}, FunctionType::Kind::BareDelegateCall, false)},
 		{"staticcall", make_shared<FunctionType>(strings{"bytes memory"}, strings{"bool", "bytes memory"}, FunctionType::Kind::BareStaticCall, false, StateMutability::View)}
 	};
+
 	if (m_stateMutability == StateMutability::Payable)
 	{
+        std::cout << "如果address类型有pay属性，则增加send/transfer方法." << std::endl;
 		members.emplace_back(MemberList::Member{"send", make_shared<FunctionType>(strings{"uint"}, strings{"bool"}, FunctionType::Kind::Send)});
 		members.emplace_back(MemberList::Member{"transfer", make_shared<FunctionType>(strings{"uint"}, strings(), FunctionType::Kind::Transfer)});
 	}
@@ -1503,10 +1513,17 @@ TypeResult BoolType::binaryOperatorResult(Token _operator, TypePointer const& _o
 {
 	if (category() != _other->category())
 		return TypePointer();
+
 	if (_operator == Token::Equal || _operator == Token::NotEqual || _operator == Token::And || _operator == Token::Or)
+    {
+        std::cout << "bool类型支持 二元操作符：" << TokenTraits::friendlyName(_operator) << std::endl;
 		return _other;
+    }
 	else
+    {
+        std::cout << "bool类型不支持二元操作符: " << TokenTraits::friendlyName(_operator) << std::endl;
 		return TypePointer();
+    }
 }
 
 BoolResult ContractType::isImplicitlyConvertibleTo(Type const& _convertTo) const
@@ -2933,6 +2950,8 @@ bool FunctionType::canTakeArguments(TypePointers const& _argumentTypes, TypePoin
 
 bool FunctionType::hasEqualParameterTypes(FunctionType const& _other) const
 {
+    std::cout << "判断参数类型是否一致, std::euqal方法实现。" << std::endl;
+
 	if (m_parameterTypes.size() != _other.m_parameterTypes.size())
 		return false;
 	return equal(

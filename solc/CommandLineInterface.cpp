@@ -435,7 +435,7 @@ bool CommandLineInterface::readInputFilesAndConfigureRemappings()
 				addStdin = true;
 			else
 			{
-                sout() << "path : " << path << endl;
+                sout() << "路径 : " << path << endl;
 				auto infile = boost::filesystem::path(path);
 				if (!boost::filesystem::exists(infile))
 				{
@@ -463,9 +463,7 @@ bool CommandLineInterface::readInputFilesAndConfigureRemappings()
 					continue;
 				}
 
-                sout() << "准备读取源码文件 1 " << endl;
-                sout() << "infile : " << infile.string() << endl;
-                sout() << "infile generic_string : " << infile.generic_string() << endl;
+                sout() << "找到源码文件，准备读取内容  " << endl;
 				m_sourceCodes[infile.generic_string()] = dev::readFileAsString(infile.string());
 
 				path = boost::filesystem::canonical(infile).string();
@@ -741,8 +739,6 @@ Allowed options)",
 
 bool CommandLineInterface::processInput()
 {
-    sout() << "CommandLineInterface::processInput" << endl;
-
 	ReadCallback::Callback fileReader = [this](string const& _path)
 	{
 		try
@@ -811,8 +807,10 @@ bool CommandLineInterface::processInput()
 		return true;
 	}
 
+    sout() << "\n\n-----------------------------------------------------第一阶段：源码读取--------------------------------------------\n" << endl;
 	if (!readInputFilesAndConfigureRemappings())
 		return false;
+    sout() << "\n\n-----------------------------------------------------第一阶段：源码读取完毕。---------------------------------------\n" << endl;
 
 	if (m_args.count(g_argLibraries))
 		for (string const& library: m_args[g_argLibraries].as<vector<string>>())
@@ -904,12 +902,12 @@ bool CommandLineInterface::processInput()
 		m_compiler->setOptimiserSettings(optimize, runs);
 
         //执行编译操作。
-        sout() << "正在编译......." << endl;
+        sout() << "数据准备完毕，准备进入第二阶段..." << endl;
 		bool successful = m_compiler->compile();
-        sout() << "编译结果 : " << successful << endl;
+        sout() << "编译工作四个阶段全部完毕，结果 : " << successful << endl;
 
         //打印错误、警告结果
-        sout() << "打印m_compiler中的错误，警告结果 : " << endl;
+        sout() << "打印在编译过程中的错误/警告等结果 : " << endl;
 		for (auto const& error: m_compiler->errors())
 		{
 			g_hasOutput = true;
@@ -918,6 +916,7 @@ bool CommandLineInterface::processInput()
 				(error->type() == Error::Type::Warning) ? "Warning" : "Error"
 			);
 		}
+        sout() << "结果打印完毕。" << endl;
 
 		if (!successful)
 			return false;

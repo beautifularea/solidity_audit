@@ -41,8 +41,6 @@ namespace
 template <typename _T>
 inline _T readFile(std::string const& _file)
 {
-    std::cout << "zhtian readFile template : " << _file << std::endl;
-
 	_T ret;
 	size_t const c_elementSize = sizeof(typename _T::value_type);
 	std::ifstream is(_file, std::ifstream::binary);
@@ -65,7 +63,7 @@ inline _T readFile(std::string const& _file)
 
 string dev::readFileAsString(string const& _file)
 {
-    std::cout << "readFileAsString : " << _file <<  "\n" << readFile<string>(_file) << std::endl; 
+    std::cout << "通过路径开始读取源码： " << readFile<string>(_file) << std::endl; 
 	return readFile<string>(_file);
 }
 

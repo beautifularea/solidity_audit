@@ -1086,7 +1086,7 @@ ASTPointer<Statement> Parser::parseStatement()
 
 	ASTPointer<Statement> statement;
     Token token = m_scanner->currentToken();
-    std::cout << "当前的token : " << TokenTraits::toString(token) << std::endl;
+    std::cout << "当前的token : \n" << TokenTraits::friendlyName(token) << std::endl;
 	switch (m_scanner->currentToken())
 	{
 	case Token::If:
@@ -1132,6 +1132,7 @@ ASTPointer<Statement> Parser::parseStatement()
 		statement = parseEmitStatement(docString);
 		break;
 	case Token::Identifier:
+        std::cout << "Token::Identifier" << std::endl;
 		if (m_insideModifier && m_scanner->currentLiteral() == "_")
 		{
 			statement = ASTNodeFactory(*this).createNode<PlaceholderStatement>(docString);
@@ -1141,6 +1142,7 @@ ASTPointer<Statement> Parser::parseStatement()
 			statement = parseSimpleStatement(docString);
 		break;
 	default:
+        std::cout << "default" << std::endl;
 		statement = parseSimpleStatement(docString);
 		break;
 	}

@@ -59,13 +59,14 @@ int main(int argc, char** argv)
 
 	if (!cli.parseArguments(argc, argv))
 		return 1;
+
 	if (!cli.processInput())
 		return 1;
 
 	bool success = false;
 	try
 	{
-        std::cout << "------------------------------------------input-----------------------------------" << std::endl;
+        std::cout << "\n\n------------------------------------------input-----------------------------------" << std::endl;
 		success = cli.actOnInput();
         std::cout << "------------------------------------------input end-----------------------------------" << std::endl;
 

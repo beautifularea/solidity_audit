@@ -1087,6 +1087,8 @@ void TypeChecker::checkExpressionAssignment(Type const& _type, Expression const&
 
 bool TypeChecker::visit(Assignment const& _assignment)
 {
+    std::cout << "TypeChecker::visit , 参数： Assignment" << std::endl;
+
 	requireLValue(_assignment.leftHandSide());
 	TypePointer t = type(_assignment.leftHandSide());
 	_assignment.annotation().type = t;
@@ -1253,8 +1255,11 @@ bool TypeChecker::visit(UnaryOperation const& _operation)
 
 void TypeChecker::endVisit(BinaryOperation const& _operation)
 {
+    std::cout << "TypeChecker::endVisit, 参数 ： 二元操作符." << std::endl;
+
 	TypePointer const& leftType = type(_operation.leftExpression());
 	TypePointer const& rightType = type(_operation.rightExpression());
+
 	TypeResult result = leftType->binaryOperatorResult(_operation.getOperator(), rightType);
 	TypePointer commonType = result.get();
 	if (!commonType)
@@ -1271,14 +1276,11 @@ void TypeChecker::endVisit(BinaryOperation const& _operation)
 		);
 		commonType = leftType;
 	}
+
+    //设置annotation
 	_operation.annotation().commonType = commonType;
-	_operation.annotation().type =
-		TokenTraits::isCompareOp(_operation.getOperator()) ?
-		make_shared<BoolType>() :
-		commonType;
-	_operation.annotation().isPure =
-		_operation.leftExpression().annotation().isPure &&
-		_operation.rightExpression().annotation().isPure;
+	_operation.annotation().type = TokenTraits::isCompareOp(_operation.getOperator()) ?	make_shared<BoolType>() : commonType;
+	_operation.annotation().isPure =_operation.leftExpression().annotation().isPure && _operation.rightExpression().annotation().isPure;
 
 	if (_operation.getOperator() == Token::Exp || _operation.getOperator() == Token::SHL)
 	{
@@ -1924,7 +1926,10 @@ void TypeChecker::endVisit(NewExpression const& _newExpression)
 
 bool TypeChecker::visit(MemberAccess const& _memberAccess)
 {
+    std::cout << "TypeChecker::visit, 访问属性 ： " << _memberAccess.memberName() << std::endl;
+
 	_memberAccess.expression().accept(*this);
+
 	TypePointer exprType = type(_memberAccess.expression());
 	ASTString const& memberName = _memberAccess.memberName();
 

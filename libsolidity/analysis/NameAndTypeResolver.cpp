@@ -58,8 +58,9 @@ bool NameAndTypeResolver::registerDeclarations(SourceUnit& _sourceUnit, ASTNode 
 	// The helper registers all declarations in m_scopes as a side-effect of its construction.
 	try
 	{
-        std::cout << "Call DeclarationRegistrationHelper" << std::endl;
+        std::cout << "调用 DeclarationRegistrationHelper" << std::endl;
 		DeclarationRegistrationHelper registrar(m_scopes, _sourceUnit, m_errorReporter, _currentScope);
+        std::cout << "调用 DeclarationRegistrationHelper完毕。" << std::endl;
 	}
 	catch (langutil::FatalError const&)
 	{
@@ -124,6 +125,13 @@ bool NameAndTypeResolver::performImports(SourceUnit& _sourceUnit, map<string, So
 						))
 							error =  true;
 		}
+        else
+        {
+            std::cout << "这段代码没有import操作，不处理。" << std::endl;
+        }
+
+    std::cout << "这段performImport执行完毕。" << std::endl;
+
 	return !error;
 }
 
@@ -490,7 +498,10 @@ DeclarationRegistrationHelper::DeclarationRegistrationHelper(
 	m_currentScope(_currentScope),
 	m_errorReporter(_errorReporter)
 {
+    std::cout << "DeclarationRegistrationHelper 开始 accept " << std::endl;
 	_astRoot.accept(*this);
+    std::cout << "DeclarationRegistrationHelper  accept 完毕。" << std::endl;
+
 	solAssert(m_currentScope == _currentScope, "Scopes not correctly closed.");
 }
 
@@ -582,19 +593,29 @@ void DeclarationRegistrationHelper::endVisit(SourceUnit& _sourceUnit)
 
 bool DeclarationRegistrationHelper::visit(ImportDirective& _import)
 {
+    std::cout << "DeclarationRegistrationHelper::visit, 参数 ImportDirective" << std::endl;
+
 	SourceUnit const* importee = _import.annotation().sourceUnit;
+
 	solAssert(!!importee, "");
+
 	if (!m_scopes[importee])
 		m_scopes[importee].reset(new DeclarationContainer(nullptr, m_scopes[nullptr].get()));
+
 	m_scopes[&_import] = m_scopes[importee];
+
 	registerDeclaration(_import, false);
+
 	return true;
 }
 
 bool DeclarationRegistrationHelper::visit(ContractDefinition& _contract)
 {
+    std::cout << "DeclarationRegistrationHelper::visit, 参数：ContractDefinition" << std::endl;
+
 	registerDeclaration(_contract, true);
 	_contract.annotation().canonicalName = currentCanonicalName();
+
 	return true;
 }
 
@@ -605,8 +626,11 @@ void DeclarationRegistrationHelper::endVisit(ContractDefinition&)
 
 bool DeclarationRegistrationHelper::visit(StructDefinition& _struct)
 {
+    std::cout << "DeclarationRegistrationHelper::visit, 参数 : StructDefinition" << std::endl;
+
 	registerDeclaration(_struct, true);
 	_struct.annotation().canonicalName = currentCanonicalName();
+
 	return true;
 }
 
@@ -617,8 +641,11 @@ void DeclarationRegistrationHelper::endVisit(StructDefinition&)
 
 bool DeclarationRegistrationHelper::visit(EnumDefinition& _enum)
 {
+    std::cout << "DeclarationRegistrationHelper::visit, 参数 ： EnumDefinition" << std::endl;
+
 	registerDeclaration(_enum, true);
 	_enum.annotation().canonicalName = currentCanonicalName();
+
 	return true;
 }
 
@@ -635,8 +662,11 @@ bool DeclarationRegistrationHelper::visit(EnumValue& _value)
 
 bool DeclarationRegistrationHelper::visit(FunctionDefinition& _function)
 {
+    std::cout << "DeclarationRegistrationHelper::visit, 参数 ： FunctionDefinition" << std::endl;
+
 	registerDeclaration(_function, true);
 	m_currentFunction = &_function;
+
 	return true;
 }
 
@@ -648,8 +678,11 @@ void DeclarationRegistrationHelper::endVisit(FunctionDefinition&)
 
 bool DeclarationRegistrationHelper::visit(ModifierDefinition& _modifier)
 {
+    std::cout << "DeclarationRegistrationHelper::visit, 参数： ModifierDefinition" << std::endl;
+
 	registerDeclaration(_modifier, true);
 	m_currentFunction = &_modifier;
+
 	return true;
 }
 
@@ -706,7 +739,9 @@ void DeclarationRegistrationHelper::endVisit(VariableDeclarationStatement& _vari
 
 bool DeclarationRegistrationHelper::visit(VariableDeclaration& _declaration)
 {
+    std::cout << "DeclarationRegistrationHelper::visit, 参数 ： VariableDeclaration" << std::endl;
 	registerDeclaration(_declaration, false);
+
 	return true;
 }
 
@@ -779,6 +814,9 @@ string DeclarationRegistrationHelper::currentCanonicalName() const
 			ret = decl->name() + ret;
 		}
 	}
+
+    std::cout << "currentCanonicalName : " << ret << std::endl;
+
 	return ret;
 }
 

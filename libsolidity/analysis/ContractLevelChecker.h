@@ -34,6 +34,8 @@ namespace dev
 namespace solidity
 {
 
+//主要是合约内的重载，抽象，等检查。
+
 /**
  * Component that verifies overloads, abstract contracts, function clashes and others
  * checks at contract or function level.
