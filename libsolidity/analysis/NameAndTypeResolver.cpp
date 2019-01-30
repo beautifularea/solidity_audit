@@ -772,6 +772,26 @@ void DeclarationRegistrationHelper::endVisit(VariableDeclarationStatement& _vari
 bool DeclarationRegistrationHelper::visit(VariableDeclaration& _declaration)
 {
     std::cout << "DeclarationRegistrationHelper::visit, 参数 ： VariableDeclaration" << std::endl;
+
+    std::cout << "打印变量定义相关内容：" << std::endl;
+    std::cout << "-------------------------------------------------------------------\n";
+
+    bool isLValue = _declaration.isLValue();
+    std::cout << (isLValue ? "是LValue" : "不是LValue") << std::endl;
+
+    bool isLocalVariable = _declaration.isLocalVariable();
+    std::cout << (isLocalVariable ? "是LocalVariable" : "不是LocalVariable") << std::endl;
+
+    bool isReturnParameter = _declaration.isReturnParameter();
+    std::cout << (isReturnParameter ? "是returnParameter" : "不是returnParameter") << std::endl;
+
+    bool isConstant = _declaration.isConstant();
+    std::cout << (isConstant ? "是constant" : "不是constant") << std::endl;
+
+    bool isStateVariable = _declaration.isStateVariable();
+    std::cout << (isStateVariable ? "是stateVariable" : "不是stateVariable") << std::endl;
+
+    std::cout << "-------------------------------------------------------------------\n";
 	registerDeclaration(_declaration, false);
 
 	return true;
