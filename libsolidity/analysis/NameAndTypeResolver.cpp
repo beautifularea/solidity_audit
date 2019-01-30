@@ -696,6 +696,22 @@ bool DeclarationRegistrationHelper::visit(FunctionDefinition& _function)
 {
     std::cout << "DeclarationRegistrationHelper::visit, 参数 ： FunctionDefinition" << std::endl;
 
+    std::cout << "打印function定义相关内容：" << std::endl;
+    std::cout << "----------------------------------------------------------------------------------\n";
+    
+    bool isConstructor = _function.isConstructor();
+    std::cout << (isConstructor ? "是constructor" : "不是constructor") << std::endl;
+
+    bool isPayable = _function.isPayable();
+    std::cout << (isPayable ? "是payable" : "不是payable") << std::endl;
+
+    //return parameter
+
+    //block
+
+    std::cout << "----------------------------------------------------------------------------------\n";
+
+
 	registerDeclaration(_function, true);
 	m_currentFunction = &_function;
 
@@ -792,6 +808,7 @@ bool DeclarationRegistrationHelper::visit(VariableDeclaration& _declaration)
     std::cout << (isStateVariable ? "是stateVariable" : "不是stateVariable") << std::endl;
 
     std::cout << "-------------------------------------------------------------------\n";
+
 	registerDeclaration(_declaration, false);
 
 	return true;
