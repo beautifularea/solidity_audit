@@ -137,17 +137,16 @@ bool NameAndTypeResolver::performImports(SourceUnit& _sourceUnit, map<string, So
 
 bool NameAndTypeResolver::resolveNamesAndTypes(ASTNode& _node, bool _resolveInsideCode)
 {
-    std::cout << "NameAndTypeResolver::resolveNamesAndTypes" << std::endl;
+    std::cout << "NameAndTypeResolver::resolveNamesAndTypes resolveInsideCode : " << std::boolalpha << _resolveInsideCode << std::endl;
 	try
 	{
 		return resolveNamesAndTypesInternal(_node, _resolveInsideCode);
 	}
 	catch (langutil::FatalError const&)
 	{
-        std::cout << "catch" << std::endl;
-
 		if (m_errorReporter.errors().empty())
 			throw; // Something is weird here, rather throw again.
+
 		return false;
 	}
 }
@@ -285,21 +284,25 @@ void NameAndTypeResolver::setScope(ASTNode const* _node)
 //这个方法暂时没有看明白???
 bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _resolveInsideCode)
 {
+    //对contract定义进行解析
 	if (ContractDefinition* contract = dynamic_cast<ContractDefinition*>(&_node))
 	{
 		bool success = true;
+
+        //设置　contract的scope
 		setScope(contract->scope());
 
 		solAssert(!!m_currentScope, "");
 
 		for (ASTPointer<InheritanceSpecifier> const& baseContract: contract->baseContracts())
         {
-            std::cout << "处理继承关系。" << std::endl;
+            std::cout << "处理基类的定义。" << std::endl;
 
 			if (!resolveNamesAndTypes(*baseContract, true))
 				success = false;
         }
 
+        //设置contract
 		setScope(contract);
 
 		if (success)
@@ -309,17 +312,25 @@ bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _res
                                                           contract->annotation().linearizedBaseContracts.end());
 
             
+            std::cout << "properBases size : " << properBases.size() << std::endl;
+
 			for (ContractDefinition const* base: properBases)
+            {
 				importInheritedScope(*base);
+            }
 		}
 
+        std::cout << "contract 的subNodes个数：" << contract->subNodes().size() << std::endl;
 		// these can contain code, only resolve parameters for now
 		for (ASTPointer<ASTNode> const& node: contract->subNodes())
 		{
             std::cout << "－－－－－－－－１－－－－－－－－－" << std::endl;
 			setScope(contract);
 			if (!resolveNamesAndTypes(*node, false))
+            {
+                std::cout << "contract内部的某个node解析失败。" << std::endl;
 				success = false;
+            }
 
             std::cout << "－－－－－－－－ｅｎｄ 1-----------------" << std::endl;
 		}
@@ -354,24 +365,38 @@ bool NameAndTypeResolver::resolveNamesAndTypesInternal(ASTNode& _node, bool _res
 	}
 	else
 	{
+        std::cout << "这部分不是contract定义，而是contract内部的变量或者方法定义。" << std::endl;
 		if (m_scopes.count(&_node))
 			setScope(&_node);
+
 		return ReferencesResolver(m_errorReporter, *this, _resolveInsideCode).resolve(_node);
 	}
 }
 
 void NameAndTypeResolver::importInheritedScope(ContractDefinition const& _base)
 {
+    std::cout << "importInheritedScope" << std::endl;
+
 	auto iterator = m_scopes.find(&_base);
+
 	solAssert(iterator != end(m_scopes), "");
+
 	for (auto const& nameAndDeclaration: iterator->second->declarations())
+    {
 		for (auto const& declaration: nameAndDeclaration.second)
+        {
 			// Import if it was declared in the base, is not the constructor and is visible in derived classes
 			if (declaration->scope() == &_base && declaration->isVisibleInDerivedContracts())
+            {
+                std::cout << "import declared in the base" << std::endl;
+
 				if (!m_currentScope->registerDeclaration(*declaration))
 				{
+                    std::cout << " And not registerDeclaration" << std::endl;
+
 					SourceLocation firstDeclarationLocation;
 					SourceLocation secondDeclarationLocation;
+
 					Declaration const* conflictingDeclaration = m_currentScope->conflictingDeclaration(*declaration);
 					solAssert(conflictingDeclaration, "");
 
@@ -400,6 +425,9 @@ void NameAndTypeResolver::importInheritedScope(ContractDefinition const& _base)
 						"Identifier already declared."
 					);
 				}
+            }
+        }
+    }
 }
 
 void NameAndTypeResolver::linearizeBaseContracts(ContractDefinition& _contract)
@@ -409,6 +437,8 @@ void NameAndTypeResolver::linearizeBaseContracts(ContractDefinition& _contract)
 	list<list<ContractDefinition const*>> input(1, list<ContractDefinition const*>{});
 	for (ASTPointer<InheritanceSpecifier> const& baseSpecifier: _contract.baseContracts())
 	{
+        std::cout << "InheritanceSpecifier" << std::endl;
+
 		UserDefinedTypeName const& baseName = baseSpecifier->name();
 		auto base = dynamic_cast<ContractDefinition const*>(baseName.annotation().referencedDeclaration);
 		if (!base)
@@ -427,6 +457,8 @@ void NameAndTypeResolver::linearizeBaseContracts(ContractDefinition& _contract)
 	vector<ContractDefinition const*> result = cThreeMerge(input);
 	if (result.empty())
 		m_errorReporter.fatalTypeError(_contract.location(), "Linearization of inheritance graph impossible");
+
+    std::cout << "线性化合约定义个数 : " << result.size() << std::endl;
 
 	_contract.annotation().linearizedBaseContracts = result;
 	_contract.annotation().contractDependencies.insert(result.begin() + 1, result.end());

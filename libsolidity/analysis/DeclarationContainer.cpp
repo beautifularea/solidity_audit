@@ -125,14 +125,26 @@ bool DeclarationContainer::registerDeclaration(
 
 vector<Declaration const*> DeclarationContainer::resolveName(ASTString const& _name, bool _recursive, bool _alsoInvisible) const
 {
+    std::cout << "DeclarationContainer::resolveName : " << _name << std::endl;
+
 	solAssert(!_name.empty(), "Attempt to resolve empty name.");
+
 	vector<Declaration const*> result;
 	if (m_declarations.count(_name))
+    {
 		result = m_declarations.at(_name);
+    }
+
 	if (_alsoInvisible && m_invisibleDeclarations.count(_name))
+    {
 		result += m_invisibleDeclarations.at(_name);
+    }
+
 	if (result.empty() && _recursive && m_enclosingContainer)
+    {
 		result = m_enclosingContainer->resolveName(_name, true, _alsoInvisible);
+    }
+
 	return result;
 }
 
