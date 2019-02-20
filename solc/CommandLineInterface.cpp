@@ -1357,10 +1357,20 @@ void CommandLineInterface::outputCompilationResults()
 		if (m_args.count(g_argGas))
 			handleGasEstimation(contract);
 
+        sout() << "开始handle内容。。。" << endl;
+        sout() << "handle bytecode" << endl;
 		handleBytecode(contract);
+
+        sout() << "handle signatureHashes" << endl;
 		handleSignatureHashes(contract);
+
+        sout() << "handle metadata" << endl;
 		handleMetadata(contract);
+
+        sout() << "handle abi" << endl;
 		handleABI(contract);
+
+        sout() << "handle natspec" << endl;
 		handleNatspec(true, contract);
 		handleNatspec(false, contract);
 	} // end of contracts iteration
