@@ -46,7 +46,7 @@
 #include <libsolidity/interface/Version.h>
 #include <libsolidity/parsing/Parser.h>
 
-#include <libyul/YulString.h>
+//#include <libyul/YulString.h>
 
 #include <liblangutil/Scanner.h>
 

@@ -470,6 +470,7 @@ private:
  * Example expressions: 2, 3.14, 2+10.2, ~10.
  * There is one distinct type per value.
  */
+//有理数 numerator / denominator
 class RationalNumberType: public Type
 {
 public:
@@ -533,6 +534,7 @@ private:
 /**
  * Literal string, can be converted to bytes, bytesX or string.
  */
+//字符串字面量
 class StringLiteralType: public Type
 {
 public:

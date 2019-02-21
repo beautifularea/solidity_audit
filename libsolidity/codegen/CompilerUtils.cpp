@@ -629,6 +629,8 @@ void CompilerUtils::convertType(
 	bool _asPartOfArgumentDecoding
 )
 {
+    std::cout << "类型转换. [" << _typeOnStack.toString() << "]" << " ===>>> "<< "[" << _targetType.toString() << "]" << std::endl;
+
 	// For a type extension, we need to remove all higher-order bits that we might have ignored in
 	// previous operations.
 	// @todo: store in the AST whether the operand might have "dirty" higher order bits
@@ -752,9 +754,13 @@ void CompilerUtils::convertType(
 		else
 		{
 			solAssert(targetTypeCategory == Type::Category::Integer || targetTypeCategory == Type::Category::Contract || targetTypeCategory == Type::Category::Address, "");
+
 			IntegerType addressType(160);
-			IntegerType const& targetType = targetTypeCategory == Type::Category::Integer
-				? dynamic_cast<IntegerType const&>(_targetType) : addressType;
+			IntegerType const& targetType = 
+                targetTypeCategory == Type::Category::Integer ?
+                dynamic_cast<IntegerType const&>(_targetType) : 
+                addressType;
+
 			if (stackTypeCategory == Type::Category::RationalNumber)
 			{
 				RationalNumberType const& constType = dynamic_cast<RationalNumberType const&>(_typeOnStack);

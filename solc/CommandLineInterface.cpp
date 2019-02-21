@@ -1049,6 +1049,9 @@ void CommandLineInterface::handleCombinedJSON()
 
 void CommandLineInterface::handleAst(string const& _argStr)
 {
+    sout() << "argStr : " << _argStr << endl;
+
+
 	string title;
 
 	if (_argStr == g_argAst)
@@ -1060,6 +1063,7 @@ void CommandLineInterface::handleAst(string const& _argStr)
 	else
 		BOOST_THROW_EXCEPTION(InternalCompilerError() << errinfo_comment("Illegal argStr for AST"));
 
+    //--ast-json 以json的格式打印语法树。
 	// do we need AST output?
 	if (m_args.count(_argStr))
 	{
@@ -1127,8 +1131,12 @@ void CommandLineInterface::handleAst(string const& _argStr)
 bool CommandLineInterface::actOnInput()
 {
 	if (m_args.count(g_argStandardJSON) || m_onlyAssemble)
+    {
+        sout() << "Already done in processInput phase" << endl;
+
 		// Already done in "processInput" phase.
 		return true;
+    }
 	else if (m_onlyLink)
 		writeLinkedFiles();
 	else
@@ -1320,7 +1328,14 @@ bool CommandLineInterface::assemble(
 
 void CommandLineInterface::outputCompilationResults()
 {
+    sout() << "输出编译结果." << endl;
+
 	handleCombinedJSON();
+
+
+    sout() << "g_argAst            : " << g_argAst << endl;
+    sout() << "g_argAstJson        : " << g_argAstJson << endl;
+    sout() << "g_argAstCompactJson : " << g_argAstCompactJson << endl;
 
 	// do we need AST output?
 	handleAst(g_argAst);
