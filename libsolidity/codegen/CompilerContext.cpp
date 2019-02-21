@@ -295,15 +295,17 @@ CompilerContext& CompilerContext::appendRevert()
 
 CompilerContext& CompilerContext::appendConditionalRevert(bool _forwardReturnData)
 {
+    std::cout << "这个方法是用来添加[条件revert]方法，即触发了某个条件，则调用revert方法。" << std::endl;
+
 	if (_forwardReturnData && m_evmVersion.supportsReturndata())
     {
-        std::cout << "添加有返回值的Assembly." << std::endl;
+        std::cout << "添加有返回值的revert." << std::endl;
 
 		appendInlineAssembly(R"({ if condition { returndatacopy(0, 0, returndatasize())	revert(0, returndatasize())}})", {"condition"});
     }
 	else
     {
-        std::cout << "添加没有返回值的Assembly." << std::endl;
+        std::cout << "添加没有返回值的revert." << std::endl;
 
 		appendInlineAssembly(R"({ if condition { revert(0, 0) }})", {"condition"});
     }

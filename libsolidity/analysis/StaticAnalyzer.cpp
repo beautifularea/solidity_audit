@@ -47,6 +47,8 @@ bool StaticAnalyzer::visit(ContractDefinition const& _contract)
 
 void StaticAnalyzer::endVisit(ContractDefinition const&)
 {
+    std::cout << "静态分析的　ContractDefinition 的endvisit方法。" << std::endl;
+
 	m_library = false;
 	m_currentContract = nullptr;
 }
@@ -64,6 +66,8 @@ bool StaticAnalyzer::visit(FunctionDefinition const& _function)
 
 void StaticAnalyzer::endVisit(FunctionDefinition const&)
 {
+    std::cout << "静态分析的 FunctionDefinition 的endvisit方法，判断变量或者方法参数被使用与否。" << std::endl;
+
 	if (m_currentFunction && !m_currentFunction->body().statements().empty())
     {
 		for (auto const& var: m_localVarUseCount)
@@ -85,21 +89,31 @@ void StaticAnalyzer::endVisit(FunctionDefinition const&)
 
 bool StaticAnalyzer::visit(Identifier const& _identifier)
 {
+    std::cout << "静态分析　Identifier的visit方法, identifier name : " << _identifier.name() << std::endl;
+
 	if (m_currentFunction)
 		if (auto var = dynamic_cast<VariableDeclaration const*>(_identifier.annotation().referencedDeclaration))
 		{
 			solAssert(!var->name().empty(), "");
+
 			if (var->isLocalVariable())
+            {
+                std::cout << "在此添加 localVar的使用情况, 存储到ｍａｐ中，以VariableDeclaration的<id, self>作为key, value 则为引用的个数。" << std::endl;
 				m_localVarUseCount[make_pair(var->id(), var)] += 1;
+            }
 		}
 	return true;
 }
 
 bool StaticAnalyzer::visit(VariableDeclaration const& _variable)
 {
+    std::cout << "静态分析，VariableDeclaration的visit方法。" << std::endl;
+
 	if (m_currentFunction)
 	{
 		solAssert(_variable.isLocalVariable(), "");
+
+        std::cout << "variable name : " << _variable.name() << std::endl;
 		if (_variable.name() != "")
 			// This is not a no-op, the entry might pre-exist.
 			m_localVarUseCount[make_pair(_variable.id(), &_variable)] += 0;

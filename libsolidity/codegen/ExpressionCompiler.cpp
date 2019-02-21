@@ -658,6 +658,7 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 			break;
 		case FunctionType::Kind::Send:
 		case FunctionType::Kind::Transfer:
+            std::cout << "进入到 send/Transfer　方法的case" << std::endl;
 			_functionCall.expression().accept(*this);
 			// Provide the gas stipend manually at first because we may send zero ether.
 			// Will be zeroed if we send more than zero ether.
@@ -689,6 +690,9 @@ bool ExpressionCompiler::visit(FunctionCall const& _functionCall)
 			{
 				// Check if zero (out of stack or not enough balance).
 				// TODO: bubble up here, but might also be different error.
+
+                std::cout << "address的transfer方法，先加入ISZERO指令，判断是否为0" << std::endl;
+
 				m_context << Instruction::ISZERO;
 				m_context.appendConditionalRevert(true);
 			}
@@ -1555,7 +1559,11 @@ void ExpressionCompiler::endVisit(Identifier const& _identifier)
 		case Type::Category::Contract:
 			// "this" or "super"
 			if (!dynamic_cast<ContractType const&>(*magicVar->type()).isSuper())
+            {
 				m_context << Instruction::ADDRESS;
+
+                std::cout << "在A literal string or number.ExpressionCompiler::endVisit() is used to actually parse its value, ADDRESS." << std::endl;
+            }
 			break;
 		case Type::Category::Integer:
 			// "now"
@@ -1606,6 +1614,7 @@ void ExpressionCompiler::endVisit(Literal const& _literal)
 	case Type::Category::RationalNumber:
 	case Type::Category::Bool:
 	case Type::Category::Address:
+        std::cout << "在endVisit中添加literal value : " << _literal.value() << std::endl;
 		m_context << type->literalValue(&_literal);
 		break;
 	case Type::Category::StringLiteral:
