@@ -107,9 +107,12 @@ pair<bool, shared_ptr<SymbolicVariable>> dev::solidity::newSymbolicVariable(
 	smt::SolverInterface& _solver
 )
 {
+    std::cout << "newSymbolicVariable uniqueName : " << _uniqueName << std::endl;
+
 	bool abstract = false;
 	shared_ptr<SymbolicVariable> var;
 	TypePointer type = _type.shared_from_this();
+
 	if (!isSupportedTypeDeclaration(_type))
 	{
 		abstract = true;

@@ -1108,7 +1108,7 @@ void CommandLineInterface::handleAst(string const& _argStr)
 		}
 		else
 		{
-			sout() << title << endl << endl;
+			sout() << "ast-json 方式： " << title << endl << endl;
 			for (auto const& sourceCode: m_sourceCodes)
 			{
 				sout() << endl << "======= " << sourceCode.first << " =======" << endl;
@@ -1122,7 +1122,10 @@ void CommandLineInterface::handleAst(string const& _argStr)
 					printer.print(sout());
 				}
 				else
+                {
+                    sout() << "调用ASTJsonConverter,打印抽象语法树。" << endl;
 					ASTJsonConverter(legacyFormat, m_compiler->sourceIndices()).print(sout(), m_compiler->ast(sourceCode.first));
+                }
 			}
 		}
 	}

@@ -197,10 +197,13 @@ Json::Value&& ASTJsonConverter::toJson(ASTNode const& _node)
 
 bool ASTJsonConverter::visit(SourceUnit const& _node)
 {
+    std::cout << "ASTJsonConverter 打印SourceUnit部分。" << std::endl;
+
 	Json::Value exportedSymbols = Json::objectValue;
 	for (auto const& sym: _node.annotation().exportedSymbols)
 	{
 		exportedSymbols[sym.first] = Json::arrayValue;
+
 		for (Declaration const* overload: sym.second)
 			exportedSymbols[sym.first].append(nodeId(*overload));
 	}
@@ -208,22 +211,27 @@ bool ASTJsonConverter::visit(SourceUnit const& _node)
 		_node,
 		"SourceUnit",
 		{
-			make_pair("absolutePath", _node.annotation().path),
+			make_pair("absolutePath",    _node.annotation().path),
 			make_pair("exportedSymbols", move(exportedSymbols)),
-			make_pair("nodes", toJson(_node.nodes()))
+			make_pair("nodes",           toJson(_node.nodes()))
 		}
 	);
+
 	return false;
 }
 
 bool ASTJsonConverter::visit(PragmaDirective const& _node)
 {
+    std::cout << "ASTJsonConverter 打印PragmaDirective部分。" << std::endl;
+
 	Json::Value literals(Json::arrayValue);
 	for (auto const& literal: _node.literals())
 		literals.append(literal);
-	setJsonNode( _node, "PragmaDirective", {
-		make_pair("literals", std::move(literals))
+
+	setJsonNode( _node, 
+                "PragmaDirective", {make_pair("literals", std::move(literals))
 	});
+
 	return false;
 }
 
@@ -316,14 +324,17 @@ bool ASTJsonConverter::visit(EnumValue const& _node)
 
 bool ASTJsonConverter::visit(ParameterList const& _node)
 {
-	setJsonNode(_node, "ParameterList", {
-		make_pair("parameters", toJson(_node.parameters()))
-	});
+    std::cout << "ASTJsonConverter　打印ParameterList部分。" << std::endl;
+
+	setJsonNode(_node, "ParameterList", {make_pair("parameters", toJson(_node.parameters()))});
+
 	return false;
 }
 
 bool ASTJsonConverter::visit(FunctionDefinition const& _node)
 {
+    std::cout << "ASTJsonConverter 打印FunctionDefinition部分。" << std::endl;
+
 	std::vector<pair<string, Json::Value>> attributes = {
 		make_pair("name", _node.name()),
 		make_pair("documentation", _node.documentation() ? Json::Value(*_node.documentation()) : Json::nullValue),
@@ -338,28 +349,36 @@ bool ASTJsonConverter::visit(FunctionDefinition const& _node)
 		make_pair("implemented", _node.isImplemented()),
 		make_pair("scope", idOrNull(_node.scope()))
 	};
+
 	if (m_legacy)
 		attributes.emplace_back("isConstructor", _node.isConstructor());
+
 	setJsonNode(_node, "FunctionDefinition", std::move(attributes));
+
 	return false;
 }
 
 bool ASTJsonConverter::visit(VariableDeclaration const& _node)
 {
+    std::cout << "ASTJsonConverter 打印VariableDeclaration部分。" << std::endl;
+
 	std::vector<pair<string, Json::Value>> attributes = {
-		make_pair("name", _node.name()),
-		make_pair("typeName", toJsonOrNull(_node.typeName())),
-		make_pair("constant", _node.isConstant()),
-		make_pair("stateVariable", _node.isStateVariable()),
-		make_pair("storageLocation", location(_node.referenceLocation())),
-		make_pair("visibility", Declaration::visibilityToString(_node.visibility())),
-		make_pair("value", _node.value() ? toJson(*_node.value()) : Json::nullValue),
-		make_pair("scope", idOrNull(_node.scope())),
+		make_pair("name",             _node.name()),
+		make_pair("typeName",         toJsonOrNull(_node.typeName())),
+		make_pair("constant",         _node.isConstant()),
+		make_pair("stateVariable",    _node.isStateVariable()),
+		make_pair("storageLocation",  location(_node.referenceLocation())),
+		make_pair("visibility",       Declaration::visibilityToString(_node.visibility())),
+		make_pair("value",            _node.value() ? toJson(*_node.value()) : Json::nullValue),
+		make_pair("scope",            idOrNull(_node.scope())),
 		make_pair("typeDescriptions", typePointerToJson(_node.annotation().type, true))
 	};
+
 	if (m_inEvent)
 		attributes.emplace_back("indexed", _node.isIndexed());
+
 	setJsonNode(_node, "VariableDeclaration", std::move(attributes));
+
 	return false;
 }
 
@@ -423,6 +442,8 @@ bool ASTJsonConverter::visit(UserDefinedTypeName const& _node)
 
 bool ASTJsonConverter::visit(FunctionTypeName const& _node)
 {
+    std::cout << "ASTJsonConverter 打印FunctionTypeName部分。" << std::endl;
+
 	setJsonNode(_node, "FunctionTypeName", {
 		make_pair("visibility", Declaration::visibilityToString(_node.visibility())),
 		make_pair("stateMutability", stateMutabilityToString(_node.stateMutability())),

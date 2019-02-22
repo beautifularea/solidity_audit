@@ -89,6 +89,8 @@ void ContractDefinition::accept(ASTVisitor& _visitor)
 
 void ContractDefinition::accept(ASTConstVisitor& _visitor) const
 {
+    std::cout << "合约的定义accept部分，需要遍历所有的subNode" << std::endl;
+
 	if (_visitor.visit(*this))
 	{
 		listAccept(m_baseContracts, _visitor);
@@ -190,8 +192,11 @@ void ParameterList::accept(ASTVisitor& _visitor)
 
 void ParameterList::accept(ASTConstVisitor& _visitor) const
 {
+    std::cout << "ParameterList的accept部分，需要遍历subNode" << std::endl;
+
 	if (_visitor.visit(*this))
 		listAccept(m_parameters, _visitor);
+
 	_visitor.endVisit(*this);
 }
 

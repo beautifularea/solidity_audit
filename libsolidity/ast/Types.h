@@ -155,6 +155,7 @@ public:
 	virtual ~Type() = default;
 	enum class Category
 	{
+        //支持19种数据类型.
 		Address, Integer, RationalNumber, StringLiteral, Bool, FixedPoint, Array,
 		FixedBytes, Contract, Struct, Function, Enum, Tuple,
 		Mapping, TypeType, Modifier, Magic, Module,

@@ -51,6 +51,7 @@ void SMTChecker::analyze(SourceUnit const& _source, shared_ptr<Scanner> const& _
 {
 	m_variableUsage = make_shared<VariableUsage>(_source);
 	m_scanner = _scanner;
+
 	if (_source.annotation().experimentalFeatures.count(ExperimentalFeature::SMTChecker))
 		_source.accept(*this);
 }
@@ -59,6 +60,7 @@ bool SMTChecker::visit(ContractDefinition const& _contract)
 {
 	for (auto _var : _contract.stateVariables())
 		createVariable(*_var);
+
 	return true;
 }
 
@@ -1194,18 +1196,22 @@ bool SMTChecker::createVariable(VariableDeclaration const& _varDecl)
 	// This might be the case for multiple calls to the same function.
 	if (knownVariable(_varDecl))
 		return true;
+
 	auto const& type = _varDecl.type();
+    std::cout << "SMTChecker createVariable type name : " << _varDecl.typeName() << std::endl;
+
 	solAssert(m_variables.count(&_varDecl) == 0, "");
+
 	auto result = newSymbolicVariable(*type, _varDecl.name() + "_" + to_string(_varDecl.id()), *m_interface);
 	m_variables.emplace(&_varDecl, result.second);
+
 	if (result.first)
 	{
-		m_errorReporter.warning(
-			_varDecl.location(),
-			"Assertion checker does not yet support the type of this variable."
-		);
+		m_errorReporter.warning(_varDecl.location(),"Assertion checker does not yet support the type of this variable.");
+
 		return false;
 	}
+
 	return true;
 }
 

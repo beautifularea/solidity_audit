@@ -392,6 +392,7 @@ bool CompilerStack::analyze()
 			SMTChecker smtChecker(m_errorReporter, m_smtlib2Responses);
 			for (Source const* source: m_sourceOrder)
 				smtChecker.analyze(*source->ast, source->scanner);
+
 			m_unhandledSMTLib2Queries += smtChecker.unhandledQueries();
 		}
         std::cout << "第十一步： SMT checker阶段完毕。" << std::endl;
